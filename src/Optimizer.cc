@@ -165,13 +165,13 @@ void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<M
                 const cv::KeyPoint &kpUn = pKF->mvKeysUn[leftIndex]; // index를 통해 KeyFrame에서 KeyPoint를 가져옴
 
                 Eigen::Matrix<double,2,1> obs; 
-                obs << kpUn.pt.x, kpUn.pt.y; // KeyPoint의 위치를 통해 관측 행렬 구성
+                obs << kpUn.pt.x, kpUn.pt.y; // KeyPoint의 위치를 통해 위치 행렬 구성
 
                 ORB_SLAM3::EdgeSE3ProjectXYZ* e = new ORB_SLAM3::EdgeSE3ProjectXYZ(); // Edge Projection 객체 생성
 
                 e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id))); // MapPoint의 ID를 통해 에지의 0번째 Vertex를 구성
                 e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pKF->mnId))); // KeyFrame으로 부터 가져온 Vertex를 에지의 1번째 Vertex로 구성
-                e->setMeasurement(obs); // 관측 행렬을 에지에 추가
+                e->setMeasurement(obs); // 위치 행렬을 에지에 추가
                 const float &invSigma2 = pKF->mvInvLevelSigma2[kpUn.octave]; // KeyFrame에서 keyPoint의 옥타브에 해당하는 Sigma값을 가져옴
                 e->setInformation(Eigen::Matrix2d::Identity()*invSigma2); // Sigma 값을 통해 Information 행렬 추가
 
@@ -234,13 +234,13 @@ void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<M
 
                     Eigen::Matrix<double,2,1> obs;
                     cv::KeyPoint kp = pKF->mvKeysRight[rightIndex]; // keyFrame에서 keyPoinnt를 가져옴
-                    obs << kp.pt.x, kp.pt.y; // KeyPoint의 위치를 통해 관측 행렬 구성
+                    obs << kp.pt.x, kp.pt.y; // KeyPoint의 위치를 통해 위치 행렬 구성
 
                     ORB_SLAM3::EdgeSE3ProjectXYZToBody *e = new ORB_SLAM3::EdgeSE3ProjectXYZToBody(); // Projection 객체 생성
 
                     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id))); // MapPoint의 ID를 통해 에지의 0번째 Vertex를 구성
                     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pKF->mnId))); // KeyFrame으로 부터 가져온 Vertex를 에지의 1번째 Vertex로 구성
-                    e->setMeasurement(obs); // 관측 행렬을 에지에 추가
+                    e->setMeasurement(obs); // 위치 행렬을 에지에 추가
                     const float &invSigma2 = pKF->mvInvLevelSigma2[kp.octave]; // KeyFrame에서 keyPoint의 옥타브에 해당하는 Sigma값을 가져옴
                     e->setInformation(Eigen::Matrix2d::Identity()*invSigma2); // Sigma 값을 통해 Information 행렬 추가
 
@@ -442,11 +442,11 @@ void Optimizer::FullInertialBA(Map *pMap, int its, const bool bFixLocal, const l
             optimizer.addVertex(VV); // 옵티마이저에 Vertex 추가 
             if (!bInit) // 초기화가 이루어지지 않았다면
             {
-                VertexGyroBias* VG = new VertexGyroBias(pKFi); // KeyFrame에 대한 새로운 자이로 바이어스 정점을 생성
+                VertexGyroBias* VG = new VertexGyroBias(pKFi); // KeyFrame에 대한 자이로 바이어스 정점을 생성
                 VG->setId(maxKFid+3*(pKFi->mnId)+2);
                 VG->setFixed(bFixed);
                 optimizer.addVertex(VG); // 옵티마이저에 Vertex 추가
-                VertexAccBias* VA = new VertexAccBias(pKFi); // KeyFrame에 대한 새로운 가속도 바이어스 정점을 생성
+                VertexAccBias* VA = new VertexAccBias(pKFi); // KeyFrame에 대한 가속도 바이어스 정점을 생성
                 VA->setId(maxKFid+3*(pKFi->mnId)+3);
                 VA->setFixed(bFixed);
                 optimizer.addVertex(VA); // 옵티마이저에 Vertex 추가
@@ -477,7 +477,7 @@ void Optimizer::FullInertialBA(Map *pMap, int its, const bool bFixLocal, const l
     {
         KeyFrame* pKFi = vpKFs[i];
 
-        if(!pKFi->mPrevKF) // KeyFrame의 이전 KeyFrame이 존재하지 않으면 종료
+        if(!pKFi->mPrevKF) // KeyFrame의 이전 KeyFrame이 존재하지 않으면 무시
         {
             Verbose::PrintMess("NOT INERTIAL LINK TO PREVIOUS FRAME!", Verbose::VERBOSITY_NORMAL);
             continue;
@@ -629,7 +629,7 @@ void Optimizer::FullInertialBA(Map *pMap, int its, const bool bFixLocal, const l
                 {
                     kpUn = pKFi->mvKeysUn[leftIndex]; // KeyFrame에서 KeyPoint를 가져옴
                     Eigen::Matrix<double,2,1> obs;
-                    obs << kpUn.pt.x, kpUn.pt.y; // KeyPoint의 위치를 통해 관측 행렬 구성
+                    obs << kpUn.pt.x, kpUn.pt.y; // KeyPoint의 위치를 통해 위치 행렬 구성
 
                     EdgeMono* e = new EdgeMono(0); // Monocular 에지 객체 생성
 
@@ -640,7 +640,7 @@ void Optimizer::FullInertialBA(Map *pMap, int its, const bool bFixLocal, const l
 
                     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id))); // MapPoint의 ID를 통해 에지의 0번째 Vertex를 구성
                     e->setVertex(1, VP); // KeyFrame으로 부터 가져온 Vertex를 에지의 1번째 Vertex로 구성
-                    e->setMeasurement(obs); // 에지에 관측 행렬을 설정
+                    e->setMeasurement(obs); // 에지에 위치 행렬을 설정
                     const float invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave]; // KeyPoint의 옥타브를 통해 sigma 값을 가져옴
 
                     e->setInformation(Eigen::Matrix2d::Identity()*invSigma2); // Information 행렬을 설정
@@ -687,7 +687,7 @@ void Optimizer::FullInertialBA(Map *pMap, int its, const bool bFixLocal, const l
 
                         Eigen::Matrix<double,2,1> obs;
                         kpUn = pKFi->mvKeysRight[rightIndex]; // KeyFrame에서 KeyPoint를 가져옴
-                        obs << kpUn.pt.x, kpUn.pt.y; // KeyPoint의 위치를 통해 관측 행렬 구성
+                        obs << kpUn.pt.x, kpUn.pt.y; // KeyPoint의 위치를 통해 위치 행렬 구성
 
                         EdgeMono *e = new EdgeMono(1); // Monocular 에지 객체 생성
 
@@ -698,7 +698,7 @@ void Optimizer::FullInertialBA(Map *pMap, int its, const bool bFixLocal, const l
 
                         e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id))); // MapPoint의 ID를 통해 에지의 0번째 Vertex를 구성
                         e->setVertex(1, VP); // KeyFrame으로 부터 가져온 Vertex를 에지의 1번째 Vertex로 구성
-                        e->setMeasurement(obs); // 에지에 관측 행렬을 설정
+                        e->setMeasurement(obs); // 에지에 위치 행렬을 설정
                         const float invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave]; // KeyPoint의 옥타브를 통해 sigma 값을 가져옴
                         e->setInformation(Eigen::Matrix2d::Identity()*invSigma2); // Information 행렬을 설정
 
@@ -803,7 +803,7 @@ void Optimizer::FullInertialBA(Map *pMap, int its, const bool bFixLocal, const l
         else
         {
             pMP->mPosGBA = vPoint->estimate().cast<float>(); // MapPoint의 Global BA pose를 설정
-            pMP->mnBAGlobalForKF = nLoopId; // MapPoint에 LoopCloser ID를 설정
+            pMP->mnBAGlobalForKF = nLoopId; 
         }
 
     }
@@ -871,12 +871,12 @@ int Optimizer::PoseOptimization(Frame *pFrame)
 
                     Eigen::Matrix<double,2,1> obs;
                     const cv::KeyPoint &kpUn = pFrame->mvKeysUn[i]; // Frame에서 keyPoint를 가져옴
-                    obs << kpUn.pt.x, kpUn.pt.y; // Matrix에 KeyPoint의 x, y 값 저장
+                    obs << kpUn.pt.x, kpUn.pt.y; // Matrix에 KeyPoint의 x, y 값 저장하여 위치 행렬 생성
 
-                    ORB_SLAM3::EdgeSE3ProjectXYZOnlyPose* e = new ORB_SLAM3::EdgeSE3ProjectXYZOnlyPose(); // Projection 객체 생성
+                    ORB_SLAM3::EdgeSE3ProjectXYZOnlyPose* e = new ORB_SLAM3::EdgeSE3ProjectXYZOnlyPose(); // Projection 에지 객체 생성
 
                     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(0))); // Vertex를 가져와 객체에 전달
-                    e->setMeasurement(obs); // KeyPoint의 x,y 값을 측정 값으로 전달
+                    e->setMeasurement(obs); // KeyPoint의 x,y 값을 측정 값으로 전달하여 위치 행렬 설정
                     const float invSigma2 = pFrame->mvInvLevelSigma2[kpUn.octave]; // keyPoint의 옥타브에 대한 Sigma 값을 가져옴
                     e->setInformation(Eigen::Matrix2d::Identity()*invSigma2); // 단위 행렬에 sigma 값을 곱해 Information으로 사용
 
@@ -938,12 +938,12 @@ int Optimizer::PoseOptimization(Frame *pFrame)
                     pFrame->mvbOutlier[i] = false; // KeyPoint가 아웃라이너가 아니라고 설정
 
                     Eigen::Matrix<double, 2, 1> obs;
-                    obs << kpUn.pt.x, kpUn.pt.y; // KeyPoint 좌표를 통해 관찰 행렬 생성
+                    obs << kpUn.pt.x, kpUn.pt.y; // KeyPoint 좌표를 통해 위치 행렬 생성
 
                     ORB_SLAM3::EdgeSE3ProjectXYZOnlyPose *e = new ORB_SLAM3::EdgeSE3ProjectXYZOnlyPose(); // 카메라 pose만 영향 받는 Projection 에지 생성
 
                     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(0))); // 카메라의 위치를 설정
-                    e->setMeasurement(obs); // 에지에 관찰 행렬 설정
+                    e->setMeasurement(obs); // 에지에 위치 행렬 설정
                     const float invSigma2 = pFrame->mvInvLevelSigma2[kpUn.octave]; // KeyPoint의 옥타브를 통해 sigma 값을 가져옴
                     e->setInformation(Eigen::Matrix2d::Identity() * invSigma2); // 에지에 information 행렬을 설정
 
@@ -963,14 +963,14 @@ int Optimizer::PoseOptimization(Frame *pFrame)
                     kpUn = pFrame->mvKeysRight[i - pFrame->Nleft]; // Frame에서 KeyPoint를 가져옴
 
                     Eigen::Matrix<double, 2, 1> obs;
-                    obs << kpUn.pt.x, kpUn.pt.y; // KeyPoint 좌표를 통해 관찰 행렬 생성
+                    obs << kpUn.pt.x, kpUn.pt.y; // KeyPoint 좌표를 통해 위치 행렬 생성
 
                     pFrame->mvbOutlier[i] = false; // KeyPoint가 아웃라이너가 아니라고 설정
 
                     ORB_SLAM3::EdgeSE3ProjectXYZOnlyPoseToBody *e = new ORB_SLAM3::EdgeSE3ProjectXYZOnlyPoseToBody(); // 카메라 pose만 영향 받는 Projection 에지 생성
 
                     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(0))); // 카메라의 위치를 설정
-                    e->setMeasurement(obs);
+                    e->setMeasurement(obs); // 에지에 위치 행렬 설정
                     const float invSigma2 = pFrame->mvInvLevelSigma2[kpUn.octave]; // KeyPoint의 옥타브를 통해 sigma 값을 가져옴
                     e->setInformation(Eigen::Matrix2d::Identity() * invSigma2); // 에지에 information 행렬을 설정
 
@@ -2118,35 +2118,35 @@ void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFi
 int Optimizer::OptimizeSim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> &vpMatches1, g2o::Sim3 &g2oS12, const float th2,
                             const bool bFixScale, Eigen::Matrix<double,7,7> &mAcumHessian, const bool bAllPoints)
 {
-    g2o::SparseOptimizer optimizer;
+    g2o::SparseOptimizer optimizer; // 옵티마이저 생성
     g2o::BlockSolverX::LinearSolverType * linearSolver;
 
-    linearSolver = new g2o::LinearSolverDense<g2o::BlockSolverX::PoseMatrixType>();
+    linearSolver = new g2o::LinearSolverDense<g2o::BlockSolverX::PoseMatrixType>(); // Linear Solver 생성
 
-    g2o::BlockSolverX * solver_ptr = new g2o::BlockSolverX(linearSolver);
+    g2o::BlockSolverX * solver_ptr = new g2o::BlockSolverX(linearSolver); // Linear Solver를 통해 Block 객체 생성
 
-    g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
-    optimizer.setAlgorithm(solver);
+    g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr); // Levenberg 알고리즘 객체 생성
+    optimizer.setAlgorithm(solver); // 옵티마이저에 알고리즘 설정
 
     // Camera poses
-    const Eigen::Matrix3f R1w = pKF1->GetRotation();
-    const Eigen::Vector3f t1w = pKF1->GetTranslation();
-    const Eigen::Matrix3f R2w = pKF2->GetRotation();
-    const Eigen::Vector3f t2w = pKF2->GetTranslation();
+    const Eigen::Matrix3f R1w = pKF1->GetRotation(); // 첫번째 keyFrame의 회전 행렬을 가져옴
+    const Eigen::Vector3f t1w = pKF1->GetTranslation(); // 첫번째 KeyFrame의 Translation 행렬을 가져옴
+    const Eigen::Matrix3f R2w = pKF2->GetRotation(); // 두번째 KeyFrame의 회전 행렬을 가져옴
+    const Eigen::Vector3f t2w = pKF2->GetTranslation(); // 두번째 KeyFrame의 Translation 행렬을 가져옴
 
     // Set Sim3 vertex
-    ORB_SLAM3::VertexSim3Expmap * vSim3 = new ORB_SLAM3::VertexSim3Expmap();
-    vSim3->_fix_scale=bFixScale;
-    vSim3->setEstimate(g2oS12);
-    vSim3->setId(0);
-    vSim3->setFixed(false);
-    vSim3->pCamera1 = pKF1->mpCamera;
+    ORB_SLAM3::VertexSim3Expmap * vSim3 = new ORB_SLAM3::VertexSim3Expmap(); // Sim3 변환 Vertex 객체 생성
+    vSim3->_fix_scale=bFixScale; // scale을 고정할 것인지 결정  
+    vSim3->setEstimate(g2oS12); // Sim3 변환을 설정
+    vSim3->setId(0); // Vertex의 ID를 설정
+    vSim3->setFixed(false); // Vertex를 고정할 것인지를 나타내는 플래그
+    vSim3->pCamera1 = pKF1->mpCamera; // KeyFrame에 대응하는 카메라 모델을 설정
     vSim3->pCamera2 = pKF2->mpCamera;
-    optimizer.addVertex(vSim3);
+    optimizer.addVertex(vSim3); // 옵티마이저에 Vertex 추가
 
     // Set MapPoint vertices
-    const int N = vpMatches1.size();
-    const vector<MapPoint*> vpMapPoints1 = pKF1->GetMapPointMatches();
+    const int N = vpMatches1.size(); // 매칭 MapPoint 배열의 크기를 저장
+    const vector<MapPoint*> vpMapPoints1 = pKF1->GetMapPointMatches(); // 첫번째 KeyFrame의 매칭 MapPoint를 얻음
     vector<ORB_SLAM3::EdgeSim3ProjectXYZ*> vpEdges12;
     vector<ORB_SLAM3::EdgeInverseSim3ProjectXYZ*> vpEdges21;
     vector<size_t> vnIndexEdge;
@@ -2157,7 +2157,7 @@ int Optimizer::OptimizeSim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> &
     vpEdges21.reserve(2*N);
     vbIsInKF2.reserve(2*N);
 
-    const float deltaHuber = sqrt(th2);
+    const float deltaHuber = sqrt(th2); // delta 가중치를 설정
 
     int nCorrespondences = 0;
     int nBadMPs = 0;
@@ -2167,516 +2167,516 @@ int Optimizer::OptimizeSim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> &
 
     vector<int> vIdsOnlyInKF2;
 
-    for(int i=0; i<N; i++)
+    for(int i=0; i<N; i++) // 매칭 MapPoint의 크기만큼 loop
     {
-        if(!vpMatches1[i])
+        if(!vpMatches1[i]) // MapPoint가 존재하지 않으면 무시
             continue;
 
-        MapPoint* pMP1 = vpMapPoints1[i];
-        MapPoint* pMP2 = vpMatches1[i];
+        MapPoint* pMP1 = vpMapPoints1[i]; // KeyFrame의 매칭 MapPoint를 가져옴
+        MapPoint* pMP2 = vpMatches1[i]; // 매칭 MapPoint를 가져옴
 
-        const int id1 = 2*i+1;
-        const int id2 = 2*(i+1);
+        const int id1 = 2*i+1; // Vertex의 ID를 생성
+        const int id2 = 2*(i+1); // 또다른 Vertex의 ID를 생성
 
-        const int i2 = get<0>(pMP2->GetIndexInKeyFrame(pKF2));
+        const int i2 = get<0>(pMP2->GetIndexInKeyFrame(pKF2)); // 매칭 MapPoint의 index를 통해 2번째 KeyFrame에서의 MapPoint index를 가져옴 (음수면 MapPoint가 없는 것)
 
         Eigen::Vector3f P3D1c;
         Eigen::Vector3f P3D2c;
 
-        if(pMP1 && pMP2)
+        if(pMP1 && pMP2) // MapPoint가 존재할 경우
         {
-            if(!pMP1->isBad() && !pMP2->isBad())
+            if(!pMP1->isBad() && !pMP2->isBad()) // MapPoint가 Bad 상태가 아닌 경우
             {
-                g2o::VertexSBAPointXYZ* vPoint1 = new g2o::VertexSBAPointXYZ();
-                Eigen::Vector3f P3D1w = pMP1->GetWorldPos();
-                P3D1c = R1w*P3D1w + t1w;
-                vPoint1->setEstimate(P3D1c.cast<double>());
-                vPoint1->setId(id1);
-                vPoint1->setFixed(true);
-                optimizer.addVertex(vPoint1);
+                g2o::VertexSBAPointXYZ* vPoint1 = new g2o::VertexSBAPointXYZ(); // MapPoint의 3D Point Vertex 생성
+                Eigen::Vector3f P3D1w = pMP1->GetWorldPos(); // keyFrame MapPoint의 pose를 가져옴
+                P3D1c = R1w*P3D1w + t1w;  // 첫 번째 KeyFrame에서의 MapPoint position을 계산
+                vPoint1->setEstimate(P3D1c.cast<double>()); // Vertex에 MapPoint postition을 설정
+                vPoint1->setId(id1); // Vertex ID 설정
+                vPoint1->setFixed(true); // Vertex를 고정한다고 설정
+                optimizer.addVertex(vPoint1); // 옵티마이저에 Vertex 추가
 
-                g2o::VertexSBAPointXYZ* vPoint2 = new g2o::VertexSBAPointXYZ();
-                Eigen::Vector3f P3D2w = pMP2->GetWorldPos();
-                P3D2c = R2w*P3D2w + t2w;
-                vPoint2->setEstimate(P3D2c.cast<double>());
-                vPoint2->setId(id2);
-                vPoint2->setFixed(true);
-                optimizer.addVertex(vPoint2);
+                g2o::VertexSBAPointXYZ* vPoint2 = new g2o::VertexSBAPointXYZ(); // MapPoint의 3D Point Vertex 생성
+                Eigen::Vector3f P3D2w = pMP2->GetWorldPos(); // 매칭 MapPoint의 pose를 가져옴
+                P3D2c = R2w*P3D2w + t2w; // 두 번째 KeyFrame에서의 MapPoint position을 계산
+                vPoint2->setEstimate(P3D2c.cast<double>()); // Vertex에 MapPoint postition을 설정
+                vPoint2->setId(id2); // Vertex ID 설정
+                vPoint2->setFixed(true); // Vertex를 고정한다고 설정
+                optimizer.addVertex(vPoint2); // 옵티마이저에 Vertex 추가
             }
             else
             {
-                nBadMPs++;
-                continue;
+                nBadMPs++; // Bad MapPoint 수 증가
+                continue; // 무시
             }
         }
         else
         {
-            nMatchWithoutMP++;
+            nMatchWithoutMP++; // 매칭 MapPoint가 존재하지 않은 수 증가
 
             //TODO The 3D position in KF1 doesn't exist
-            if(!pMP2->isBad())
+            if(!pMP2->isBad()) // 매칭 MapPoint가 Bad 상태가 아닌 경우
             {
-                g2o::VertexSBAPointXYZ* vPoint2 = new g2o::VertexSBAPointXYZ();
-                Eigen::Vector3f P3D2w = pMP2->GetWorldPos();
-                P3D2c = R2w*P3D2w + t2w;
-                vPoint2->setEstimate(P3D2c.cast<double>());
-                vPoint2->setId(id2);
-                vPoint2->setFixed(true);
-                optimizer.addVertex(vPoint2);
+                g2o::VertexSBAPointXYZ* vPoint2 = new g2o::VertexSBAPointXYZ(); // MapPoint의 3D Point Vertex 생성
+                Eigen::Vector3f P3D2w = pMP2->GetWorldPos(); // 매칭 MapPoint의 pose를 가져옴
+                P3D2c = R2w*P3D2w + t2w; // 두 번째 KeyFrame에서의 MapPoint position을 계산
+                vPoint2->setEstimate(P3D2c.cast<double>()); // Vertex에 MapPoint postition을 설정
+                vPoint2->setId(id2); // Vertex ID 설정
+                vPoint2->setFixed(true); // Vertex를 고정한다고 설정
+                optimizer.addVertex(vPoint2); // 옵티마이저에 Vertex 추가
 
-                vIdsOnlyInKF2.push_back(id2);
+                vIdsOnlyInKF2.push_back(id2); // 두번째 KeyFrame에만 들어있는 ID 배열에 ID 삽입
             }
             continue;
         }
 
-        if(i2<0 && !bAllPoints)
+        if(i2<0 && !bAllPoints) // MapPoint가 관찰되지 않았다면 무시
         {
             Verbose::PrintMess("    Remove point -> i2: " + to_string(i2) + "; bAllPoints: " + to_string(bAllPoints), Verbose::VERBOSITY_DEBUG);
             continue;
         }
 
-        if(P3D2c(2) < 0)
+        if(P3D2c(2) < 0) // MapPoint의 Z 좌표가 음수이면 무시 (카메라 뒤쪽에 Point 존재)
         {
             Verbose::PrintMess("Sim3: Z coordinate is negative", Verbose::VERBOSITY_DEBUG);
             continue;
         }
 
-        nCorrespondences++;
+        nCorrespondences++; // Correspondent 수 증가
 
         // Set edge x1 = S12*X2
         Eigen::Matrix<double,2,1> obs1;
-        const cv::KeyPoint &kpUn1 = pKF1->mvKeysUn[i];
-        obs1 << kpUn1.pt.x, kpUn1.pt.y;
+        const cv::KeyPoint &kpUn1 = pKF1->mvKeysUn[i]; // 첫번째 KeyFrame의 KeyPoint를 얻어옴
+        obs1 << kpUn1.pt.x, kpUn1.pt.y; // KeyPoint의 위치 행렬을 얻어옴
 
-        ORB_SLAM3::EdgeSim3ProjectXYZ* e12 = new ORB_SLAM3::EdgeSim3ProjectXYZ();
+        ORB_SLAM3::EdgeSim3ProjectXYZ* e12 = new ORB_SLAM3::EdgeSim3ProjectXYZ(); // Sim3 변환 에지 생성
 
-        e12->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id2)));
-        e12->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(0)));
-        e12->setMeasurement(obs1);
-        const float &invSigmaSquare1 = pKF1->mvInvLevelSigma2[kpUn1.octave];
-        e12->setInformation(Eigen::Matrix2d::Identity()*invSigmaSquare1);
+        e12->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id2))); // Vertex의 0번째 index로 매칭 MapPoint 삽입
+        e12->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(0))); // Sim3 변환에 해당하는 Vertex를 설정
+        e12->setMeasurement(obs1); // 위치 행렬 설정
+        const float &invSigmaSquare1 = pKF1->mvInvLevelSigma2[kpUn1.octave]; // keyPoint의 옥타브를 통해 Sigma 값을 얻어옴
+        e12->setInformation(Eigen::Matrix2d::Identity()*invSigmaSquare1); // information 행렬을 생성해 설정
 
         g2o::RobustKernelHuber* rk1 = new g2o::RobustKernelHuber;
-        e12->setRobustKernel(rk1);
-        rk1->setDelta(deltaHuber);
-        optimizer.addEdge(e12);
+        e12->setRobustKernel(rk1); // 에지에 Robust 커널 설정
+        rk1->setDelta(deltaHuber); // 커널에 가중치 설정
+        optimizer.addEdge(e12); // 옵티마이저에 에지 추가
 
         // Set edge x2 = S21*X1
         Eigen::Matrix<double,2,1> obs2;
         cv::KeyPoint kpUn2;
         bool inKF2;
-        if(i2 >= 0)
+        if(i2 >= 0) // MapPoint가 관측되었다면
         {
-            kpUn2 = pKF2->mvKeysUn[i2];
-            obs2 << kpUn2.pt.x, kpUn2.pt.y;
-            inKF2 = true;
+            kpUn2 = pKF2->mvKeysUn[i2]; // 2번쨰 KeyFrame의 KeyPoint를 가져옴
+            obs2 << kpUn2.pt.x, kpUn2.pt.y; // keyPoint의 위치 행렬을 생성
+            inKF2 = true; // 2번째 keyFrame에 MapPoint가 존재한다고 설정
 
-            nInKF2++;
+            nInKF2++; // 2번째 KeyFrame에 존재하는 MapPoint 수 증가
         }
         else
         {
-            float invz = 1/P3D2c(2);
-            float x = P3D2c(0)*invz;
-            float y = P3D2c(1)*invz;
+            float invz = 1/P3D2c(2); // MapPoint의 Z축 값의 역수를 저장
+            float x = P3D2c(0)*invz; // X축 값을 평면에 투영
+            float y = P3D2c(1)*invz; // Y축 값을 평면에 투영
 
-            obs2 << x, y;
-            kpUn2 = cv::KeyPoint(cv::Point2f(x, y), pMP2->mnTrackScaleLevel);
+            obs2 << x, y; // 위치 행렬 생성
+            kpUn2 = cv::KeyPoint(cv::Point2f(x, y), pMP2->mnTrackScaleLevel); // keyPoint 생성
 
-            inKF2 = false;
-            nOutKF2++;
+            inKF2 = false; // 두번째 KeyFrame 내에 MapPoint가 없다고 설정
+            nOutKF2++; // 2번째 KeyFrame에 존재하지 않는 MapPoint 수 증가
         }
 
-        ORB_SLAM3::EdgeInverseSim3ProjectXYZ* e21 = new ORB_SLAM3::EdgeInverseSim3ProjectXYZ();
+        ORB_SLAM3::EdgeInverseSim3ProjectXYZ* e21 = new ORB_SLAM3::EdgeInverseSim3ProjectXYZ(); // Sim3 역변환 에지 생성
 
-        e21->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id1)));
-        e21->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(0)));
-        e21->setMeasurement(obs2);
-        float invSigmaSquare2 = pKF2->mvInvLevelSigma2[kpUn2.octave];
-        e21->setInformation(Eigen::Matrix2d::Identity()*invSigmaSquare2);
+        e21->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id1))); // Vertex의 0번째 index로 KeyFrame의 매칭 MapPoint 삽입
+        e21->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(0))); // Sim3 변환에 해당하는 Vertex를 설정
+        e21->setMeasurement(obs2); // 위치 행렬 설정
+        float invSigmaSquare2 = pKF2->mvInvLevelSigma2[kpUn2.octave]; // keyPoint의 옥타브를 통해 Sigma 값을 얻어옴
+        e21->setInformation(Eigen::Matrix2d::Identity()*invSigmaSquare2); // information 행렬을 생성해 설정
 
         g2o::RobustKernelHuber* rk2 = new g2o::RobustKernelHuber;
-        e21->setRobustKernel(rk2);
-        rk2->setDelta(deltaHuber);
-        optimizer.addEdge(e21);
+        e21->setRobustKernel(rk2); // 에지에 Robust 커널 설정
+        rk2->setDelta(deltaHuber); // 커널에 가중치 설정
+        optimizer.addEdge(e21); // 옵티마이저에 에지 추가
 
-        vpEdges12.push_back(e12);
+        vpEdges12.push_back(e12); // 에지를 배열에 추가
         vpEdges21.push_back(e21);
-        vnIndexEdge.push_back(i);
+        vnIndexEdge.push_back(i); // 에지의 index를 배열에 추가
 
-        vbIsInKF2.push_back(inKF2);
+        vbIsInKF2.push_back(inKF2); // 2번째 KeyFrame에 MapPoint 존재 유무를 배열에 추가
     }
 
     // Optimize!
-    optimizer.initializeOptimization();
-    optimizer.optimize(5);
+    optimizer.initializeOptimization(); // 옵티마이저 초기화
+    optimizer.optimize(5); // 최적화 진행. 반복횟수 5회
 
     // Check inliers
     int nBad=0;
     int nBadOutKF2 = 0;
-    for(size_t i=0; i<vpEdges12.size();i++)
+    for(size_t i=0; i<vpEdges12.size();i++) // 에지 배열의 크기만큼 loop
     {
-        ORB_SLAM3::EdgeSim3ProjectXYZ* e12 = vpEdges12[i];
-        ORB_SLAM3::EdgeInverseSim3ProjectXYZ* e21 = vpEdges21[i];
-        if(!e12 || !e21)
+        ORB_SLAM3::EdgeSim3ProjectXYZ* e12 = vpEdges12[i]; // Sim3 변환 에지를 가져옴
+        ORB_SLAM3::EdgeInverseSim3ProjectXYZ* e21 = vpEdges21[i]; // Sim3 역변환 에지를 가져옴
+        if(!e12 || !e21) // 에지가 존재하지 않으면 무시
             continue;
 
-        if(e12->chi2()>th2 || e21->chi2()>th2)
+        if(e12->chi2()>th2 || e21->chi2()>th2) // 에지의 제곱 값이 가중치보다 크다면
         {
-            size_t idx = vnIndexEdge[i];
-            vpMatches1[idx]=static_cast<MapPoint*>(NULL);
-            optimizer.removeEdge(e12);
+            size_t idx = vnIndexEdge[i]; // 에지의 index를 가져옴
+            vpMatches1[idx]=static_cast<MapPoint*>(NULL); // 매칭 MapPoint를 제거
+            optimizer.removeEdge(e12); // 옵티마이저에서 에지 제거
             optimizer.removeEdge(e21);
-            vpEdges12[i]=static_cast<ORB_SLAM3::EdgeSim3ProjectXYZ*>(NULL);
+            vpEdges12[i]=static_cast<ORB_SLAM3::EdgeSim3ProjectXYZ*>(NULL); // 에지 배열에서 제거
             vpEdges21[i]=static_cast<ORB_SLAM3::EdgeInverseSim3ProjectXYZ*>(NULL);
-            nBad++;
+            nBad++; // Bad 에지 수 증가
 
-            if(!vbIsInKF2[i])
+            if(!vbIsInKF2[i]) // 2번째 KeyFrame에 MapPoint가 존재하지 않으면
             {
-                nBadOutKF2++;
+                nBadOutKF2++; // 존재하지 않은 Bad 상태 수를 증가
             }
-            continue;
+            continue; // 무시
         }
 
         //Check if remove the robust adjustment improve the result
-        e12->setRobustKernel(0);
+        e12->setRobustKernel(0); // 에지에 Robust 커널 제거
         e21->setRobustKernel(0);
     }
 
     int nMoreIterations;
-    if(nBad>0)
-        nMoreIterations=10;
+    if(nBad>0) // Bad 에지가 존재한다면
+        nMoreIterations=10; // 최적화 수 설정
     else
         nMoreIterations=5;
 
-    if(nCorrespondences-nBad<10)
-        return 0;
+    if(nCorrespondences-nBad<10) // Correspondent 수와 Bad 에지 수의 차이가 10 미만이면
+        return 0; // 함수 종료
 
     // Optimize again only with inliers
-    optimizer.initializeOptimization();
-    optimizer.optimize(nMoreIterations);
+    optimizer.initializeOptimization(); // 옵티마이저 초기화
+    optimizer.optimize(nMoreIterations); // 설정된 최적화 반복 수 만큼 최적화 진행
 
     int nIn = 0;
-    mAcumHessian = Eigen::MatrixXd::Zero(7, 7);
-    for(size_t i=0; i<vpEdges12.size();i++)
+    mAcumHessian = Eigen::MatrixXd::Zero(7, 7); // Hessian 행렬을 0행렬로 초기화
+    for(size_t i=0; i<vpEdges12.size();i++) // 에지 행렬 loop
     {
-        ORB_SLAM3::EdgeSim3ProjectXYZ* e12 = vpEdges12[i];
-        ORB_SLAM3::EdgeInverseSim3ProjectXYZ* e21 = vpEdges21[i];
-        if(!e12 || !e21)
+        ORB_SLAM3::EdgeSim3ProjectXYZ* e12 = vpEdges12[i]; // Sim3 변환 에지를 가져옴
+        ORB_SLAM3::EdgeInverseSim3ProjectXYZ* e21 = vpEdges21[i]; // Sim3 역변환 에지를 가져옴
+        if(!e12 || !e21) // 에지가 존재하지 않으면 무시
             continue;
 
-        e12->computeError();
-        e21->computeError();
+        e12->computeError(); // 에지의 오차를 계산
+        e21->computeError(); 
 
-        if(e12->chi2()>th2 || e21->chi2()>th2){
-            size_t idx = vnIndexEdge[i];
-            vpMatches1[idx]=static_cast<MapPoint*>(NULL);
+        if(e12->chi2()>th2 || e21->chi2()>th2){ // 에지의 제곱 값이 가중치 보다 크면
+            size_t idx = vnIndexEdge[i]; // 에지의 inddx를 가져옴
+            vpMatches1[idx]=static_cast<MapPoint*>(NULL); // MapPoint 제거
         }
         else{
-            nIn++;
+            nIn++; // keyFrame안에 존재하는 MapPoint 수 증가 (inlier 수 증가)
         }
     }
 
     // Recover optimized Sim3
-    g2o::VertexSim3Expmap* vSim3_recov = static_cast<g2o::VertexSim3Expmap*>(optimizer.vertex(0));
-    g2oS12= vSim3_recov->estimate();
-
-    return nIn;
+    g2o::VertexSim3Expmap* vSim3_recov = static_cast<g2o::VertexSim3Expmap*>(optimizer.vertex(0)); // 최적화된 Sim3 변환 Vertex를 가져옴
+    g2oS12= vSim3_recov->estimate(); // 최적화된 Sim3 변환을 저장
+ 
+    return nIn; // inlier 수 반환
 }
 
 // keyFrame과 IMU pose를 동시에 최적화. KeyFrame과 IMU 데이터를 사용하여 시간에 따른 위치 추정을 개선하는 함수
 void Optimizer::LocalInertialBA(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int& num_fixedKF, int& num_OptKF, int& num_MPs, int& num_edges, bool bLarge, bool bRecInit)
 {
-    Map* pCurrentMap = pKF->GetMap();
+    Map* pCurrentMap = pKF->GetMap(); // keyFrame에서 Map을 가져옴
 
-    int maxOpt=10;
-    int opt_it=10;
-    if(bLarge)
+    int maxOpt=10; // 최적화에 사용될 최대 KeyFrame 수
+    int opt_it=10; // 최적화 반복 수
+    if(bLarge) // Tracking에서 인라이너 수가 기준치 이상인 경우
     {
-        maxOpt=25;
-        opt_it=4;
+        maxOpt=25; // 최적화에 사용될 최대 KeyFrame 수 변경
+        opt_it=4; // 최적화 반복 수 변경
     }
-    const int Nd = std::min((int)pCurrentMap->KeyFramesInMap()-2,maxOpt);
-    const unsigned long maxKFid = pKF->mnId;
+    const int Nd = std::min((int)pCurrentMap->KeyFramesInMap()-2,maxOpt); // 최대 키프레임 수와 현재 Map에 있는 KeyFrame 수 중 작은 값으로 설정
+    const unsigned long maxKFid = pKF->mnId; // KeyFrame ID를 최대 keyFrame ID로 설정
 
     vector<KeyFrame*> vpOptimizableKFs;
-    const vector<KeyFrame*> vpNeighsKFs = pKF->GetVectorCovisibleKeyFrames();
+    const vector<KeyFrame*> vpNeighsKFs = pKF->GetVectorCovisibleKeyFrames(); // keyFrame의 Covisiblity Graph를 통해 이웃 keyFrame을 가져옴
     list<KeyFrame*> lpOptVisKFs;
 
     vpOptimizableKFs.reserve(Nd);
-    vpOptimizableKFs.push_back(pKF);
-    pKF->mnBALocalForKF = pKF->mnId;
-    for(int i=1; i<Nd; i++)
+    vpOptimizableKFs.push_back(pKF); // 최적화힐 KeyFrame 베열에 KeyFrame을 삽입
+    pKF->mnBALocalForKF = pKF->mnId; // keyFrame의 최적화 대상을 설정
+    for(int i=1; i<Nd; i++) // KeyFrame 수만큼 loop
     {
-        if(vpOptimizableKFs.back()->mPrevKF)
+        if(vpOptimizableKFs.back()->mPrevKF) // 가장 마지막에 삽입된 keyFrame의 이전 keyFrame이 존재한다면
         {
-            vpOptimizableKFs.push_back(vpOptimizableKFs.back()->mPrevKF);
-            vpOptimizableKFs.back()->mnBALocalForKF = pKF->mnId;
+            vpOptimizableKFs.push_back(vpOptimizableKFs.back()->mPrevKF); // 이전 keyFrame을 베열에 삽입
+            vpOptimizableKFs.back()->mnBALocalForKF = pKF->mnId; // 이전 keyFrame이 keyFrame을 최적화 대상으로 설정
         }
-        else
+        else // 이전 keyFrame이 없다면 반복 종료
             break;
     }
 
-    int N = vpOptimizableKFs.size();
+    int N = vpOptimizableKFs.size(); // 최적화힐 KeyFrame 베열 크기 저장
 
     // Optimizable points seen by temporal optimizable keyframes
     list<MapPoint*> lLocalMapPoints;
-    for(int i=0; i<N; i++)
+    for(int i=0; i<N; i++) // 최적화힐 KeyFrame 베열 크기 만큼 loop
     {
-        vector<MapPoint*> vpMPs = vpOptimizableKFs[i]->GetMapPointMatches();
-        for(vector<MapPoint*>::iterator vit=vpMPs.begin(), vend=vpMPs.end(); vit!=vend; vit++)
+        vector<MapPoint*> vpMPs = vpOptimizableKFs[i]->GetMapPointMatches(); // 최적화 대상 keyFrame의 매칭 MapPoint를 가져옴
+        for(vector<MapPoint*>::iterator vit=vpMPs.begin(), vend=vpMPs.end(); vit!=vend; vit++) // 매칭 MapPoint 배열 loop
         {
             MapPoint* pMP = *vit;
-            if(pMP)
-                if(!pMP->isBad())
-                    if(pMP->mnBALocalForKF!=pKF->mnId)
+            if(pMP) // MapPoint가 존재하고
+                if(!pMP->isBad()) // Bad 상태가 아닌경우
+                    if(pMP->mnBALocalForKF!=pKF->mnId) // MapPoint가 keyFrame을 최적화 대상으로 사용하지 않았다면
                     {
-                        lLocalMapPoints.push_back(pMP);
-                        pMP->mnBALocalForKF=pKF->mnId;
+                        lLocalMapPoints.push_back(pMP); // Local MapPoint 배열에 MapPoint 삽입
+                        pMP->mnBALocalForKF=pKF->mnId; // MapPoint가 keyFrame을 최적화 대상으로 사용하도록 설정
                     }
         }
     }
 
     // Fixed Keyframe: First frame previous KF to optimization window)
     list<KeyFrame*> lFixedKeyFrames;
-    if(vpOptimizableKFs.back()->mPrevKF)
+    if(vpOptimizableKFs.back()->mPrevKF) // 최적화 대상 KeyFrame 배열에 가장 마지막에 삽입된 keyFrame의 이전 keyFrame이 존재한다면
     {
-        lFixedKeyFrames.push_back(vpOptimizableKFs.back()->mPrevKF);
-        vpOptimizableKFs.back()->mPrevKF->mnBAFixedForKF=pKF->mnId;
+        lFixedKeyFrames.push_back(vpOptimizableKFs.back()->mPrevKF); // 고정 keyFrame 배열에 이전 keyFrame을 삽입
+        vpOptimizableKFs.back()->mPrevKF->mnBAFixedForKF=pKF->mnId; // 이전 KeyFrame이 keyFrame을 Fixed 대상으로 사용하도록 설정
     }
     else
     {
-        vpOptimizableKFs.back()->mnBALocalForKF=0;
-        vpOptimizableKFs.back()->mnBAFixedForKF=pKF->mnId;
-        lFixedKeyFrames.push_back(vpOptimizableKFs.back());
-        vpOptimizableKFs.pop_back();
+        vpOptimizableKFs.back()->mnBALocalForKF=0; // 최적화 대상 keyFrame 배열에 가장 마지막에 삽입된 keyFrame의 최적화 대상을 제거
+        vpOptimizableKFs.back()->mnBAFixedForKF=pKF->mnId; // 최적화 대상 keyFrame 배열에 가장 마지막에 삽입된 keyFrame이 keyFrame을 Fixed 대상으로 사용하도록 설정
+        lFixedKeyFrames.push_back(vpOptimizableKFs.back()); // 고정 keyFrame 배열에 가장 마지막에 삽입된 keyFrame을 삽입
+        vpOptimizableKFs.pop_back(); // 최적화 댸상 배열에서 제거
     }
 
     // Optimizable visual KFs
     const int maxCovKF = 0;
-    for(int i=0, iend=vpNeighsKFs.size(); i<iend; i++)
+    for(int i=0, iend=vpNeighsKFs.size(); i<iend; i++) // 이웃 keyFrame 배열 loop
     {
-        if(lpOptVisKFs.size() >= maxCovKF)
+        if(lpOptVisKFs.size() >= maxCovKF) // visual keyFrame배열의 크기가 최대 keyFrame 크기보다 크면 반복 종료
             break;
 
         KeyFrame* pKFi = vpNeighsKFs[i];
-        if(pKFi->mnBALocalForKF == pKF->mnId || pKFi->mnBAFixedForKF == pKF->mnId)
+        if(pKFi->mnBALocalForKF == pKF->mnId || pKFi->mnBAFixedForKF == pKF->mnId) // 이웃 keyFrame이 keyFrame을 최적화나 Fixed 대상으로 쓴적이 있다면 무시
             continue;
-        pKFi->mnBALocalForKF = pKF->mnId;
-        if(!pKFi->isBad() && pKFi->GetMap() == pCurrentMap)
+        pKFi->mnBALocalForKF = pKF->mnId; // 이웃 keyFrame이 keyFrame을 최적화 대상으로 사용하도록 설정
+        if(!pKFi->isBad() && pKFi->GetMap() == pCurrentMap) // keyFrame이 Bad 상태가 아니고 KeyFrame의 Map이 현재 Map과 같다면
         {
-            lpOptVisKFs.push_back(pKFi);
+            lpOptVisKFs.push_back(pKFi); // visual KeyFrame 배열에 삽입
 
-            vector<MapPoint*> vpMPs = pKFi->GetMapPointMatches();
-            for(vector<MapPoint*>::iterator vit=vpMPs.begin(), vend=vpMPs.end(); vit!=vend; vit++)
+            vector<MapPoint*> vpMPs = pKFi->GetMapPointMatches(); // keyFrame에서 매칭 MapPoint를 가져옴
+            for(vector<MapPoint*>::iterator vit=vpMPs.begin(), vend=vpMPs.end(); vit!=vend; vit++) // 매칭 MapPoint 배열 loop
             {
                 MapPoint* pMP = *vit;
-                if(pMP)
-                    if(!pMP->isBad())
-                        if(pMP->mnBALocalForKF!=pKF->mnId)
+                if(pMP) // MapPoint가 존재하고
+                    if(!pMP->isBad()) // Bad 상태가 아니고
+                        if(pMP->mnBALocalForKF!=pKF->mnId) // MapPoint가 keyFrame을 최적화 대상으로 사용하지 않았다면
                         {
-                            lLocalMapPoints.push_back(pMP);
-                            pMP->mnBALocalForKF=pKF->mnId;
+                            lLocalMapPoints.push_back(pMP); // Local MapPoint 배열에 MapPoint 삽입
+                            pMP->mnBALocalForKF=pKF->mnId; // MapPoint가 keyFrame을 최적화 대상으로 사용하도록 설정
                         }
             }
         }
     }
 
     // Fixed KFs which are not covisible optimizable
-    const int maxFixKF = 200;
+    const int maxFixKF = 200; // 최대 Fixed KeyFrame 개수 선언
 
-    for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
+    for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++) // Local MapPoint 배열 loop
     {
-        map<KeyFrame*,tuple<int,int>> observations = (*lit)->GetObservations();
-        for(map<KeyFrame*,tuple<int,int>>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
+        map<KeyFrame*,tuple<int,int>> observations = (*lit)->GetObservations(); // MapPoint의 관찰 대상 keyFrame을 가져옴
+        for(map<KeyFrame*,tuple<int,int>>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++) // 관찰 대상 keyFrame 배열 loop
         {
-            KeyFrame* pKFi = mit->first;
+            KeyFrame* pKFi = mit->first; // keyFrame을 가져옴
 
-            if(pKFi->mnBALocalForKF!=pKF->mnId && pKFi->mnBAFixedForKF!=pKF->mnId)
+            if(pKFi->mnBALocalForKF!=pKF->mnId && pKFi->mnBAFixedForKF!=pKF->mnId) // 관찰 대상 keyFrame이 최적화와 Fixed 대상으로 keyFrame을 사용하지 않았다면
             {
-                pKFi->mnBAFixedForKF=pKF->mnId;
-                if(!pKFi->isBad())
+                pKFi->mnBAFixedForKF=pKF->mnId; // 관찰 대상 keyFrame의 Fixed 대상으로 keyFrame을 설정
+                if(!pKFi->isBad()) // Bad 상태가 아닌 경우
                 {
-                    lFixedKeyFrames.push_back(pKFi);
-                    break;
+                    lFixedKeyFrames.push_back(pKFi); // Fixed KeyFrame 배열에 삽입
+                    break; // 반복 종료
                 }
             }
         }
-        if(lFixedKeyFrames.size()>=maxFixKF)
-            break;
+        if(lFixedKeyFrames.size()>=maxFixKF) // Fixed KeyFrame 배열의 크기가 최대 Fixed KeyFrame 개수보다 크면 
+            break; // 반복 종료
     }
 
-    bool bNonFixed = (lFixedKeyFrames.size() == 0);
+    bool bNonFixed = (lFixedKeyFrames.size() == 0); // Fixed KeyFrame 배열의 크기가 0인경우 NonFixed로 설정
 
     // Setup optimizer
-    g2o::SparseOptimizer optimizer;
-    g2o::BlockSolverX::LinearSolverType * linearSolver;
-    linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
+    g2o::SparseOptimizer optimizer; // 옵티마이저 객체 생성
+    g2o::BlockSolverX::LinearSolverType * linearSolver; 
+    linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>(); // Linear Solver 생성
 
-    g2o::BlockSolverX * solver_ptr = new g2o::BlockSolverX(linearSolver);
+    g2o::BlockSolverX * solver_ptr = new g2o::BlockSolverX(linearSolver); // Linear Solver 객체로 Block 객체 생성 
 
-    if(bLarge)
+    if(bLarge) // Tracking에서 인라이너 수가 기준치 이상인 경우
     {
-        g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
-        solver->setUserLambdaInit(1e-2); // to avoid iterating for finding optimal lambda
-        optimizer.setAlgorithm(solver);
+        g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr); //Levenberg 알고리즘 객체 생성
+        solver->setUserLambdaInit(1e-2); // 알고리즘에서 사용할 Lamda값 초기화 // to avoid iterating for finding optimal lambda
+        optimizer.setAlgorithm(solver); // 옵티마이저에 알고리즘 설정
     }
     else
     {
-        g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
-        solver->setUserLambdaInit(1e0);
-        optimizer.setAlgorithm(solver);
+        g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr); //Levenberg 알고리즘 객체 생성
+        solver->setUserLambdaInit(1e0); // 알고리즘에서 사용할 Lamda값 초기화
+        optimizer.setAlgorithm(solver); // 옵티마이저에 알고리즘 설정
     }
 
 
     // Set Local temporal KeyFrame vertices
-    N=vpOptimizableKFs.size();
-    for(int i=0; i<N; i++)
+    N=vpOptimizableKFs.size(); // 최적화 대상 keyFrame 배열의 크기 저장
+    for(int i=0; i<N; i++) // 최적화 대상 keyFrame 배열의 크기만큼 loop
     {
         KeyFrame* pKFi = vpOptimizableKFs[i];
 
-        VertexPose * VP = new VertexPose(pKFi);
-        VP->setId(pKFi->mnId);
-        VP->setFixed(false);
-        optimizer.addVertex(VP);
+        VertexPose * VP = new VertexPose(pKFi); // keyFrame에 대해 pose Vertex 생성
+        VP->setId(pKFi->mnId); // Vertex의 ID를 keyFrame ID로 설정
+        VP->setFixed(false); // Vertex를 고정하지 않도록 설정
+        optimizer.addVertex(VP); // 옵티마이저에 Vertex 추가
 
-        if(pKFi->bImu)
+        if(pKFi->bImu) // keyFrame이 IMU를 사용하는 경우
         {
-            VertexVelocity* VV = new VertexVelocity(pKFi);
-            VV->setId(maxKFid+3*(pKFi->mnId)+1);
-            VV->setFixed(false);
-            optimizer.addVertex(VV);
-            VertexGyroBias* VG = new VertexGyroBias(pKFi);
-            VG->setId(maxKFid+3*(pKFi->mnId)+2);
-            VG->setFixed(false);
-            optimizer.addVertex(VG);
-            VertexAccBias* VA = new VertexAccBias(pKFi);
-            VA->setId(maxKFid+3*(pKFi->mnId)+3);
-            VA->setFixed(false);
-            optimizer.addVertex(VA);
+            VertexVelocity* VV = new VertexVelocity(pKFi); // keyFrame에 대해 속도 Vertex 생성
+            VV->setId(maxKFid+3*(pKFi->mnId)+1); // 속도 Vertex의 ID 설정
+            VV->setFixed(false); // Vertex를 고정하지 않도록 설정
+            optimizer.addVertex(VV); // 옵티마이저에 Vertex 추가
+            VertexGyroBias* VG = new VertexGyroBias(pKFi); // keyFrame에 대해 자이로 bias Vertex 생성
+            VG->setId(maxKFid+3*(pKFi->mnId)+2); // Vertex의 ID 설정
+            VG->setFixed(false); // Vertex를 고정하지 않도록 설정
+            optimizer.addVertex(VG); // 옵티마이저에 Vertex 추가
+            VertexAccBias* VA = new VertexAccBias(pKFi); // keyFrame에 대해 가속도 bias Vertex 생성
+            VA->setId(maxKFid+3*(pKFi->mnId)+3); // Vertex의 ID 설정
+            VA->setFixed(false); // Vertex를 고정하지 않도록 설정
+            optimizer.addVertex(VA); // 옵티마이저에 Vertex 추가
         }
     }
 
     // Set Local visual KeyFrame vertices
-    for(list<KeyFrame*>::iterator it=lpOptVisKFs.begin(), itEnd = lpOptVisKFs.end(); it!=itEnd; it++)
+    for(list<KeyFrame*>::iterator it=lpOptVisKFs.begin(), itEnd = lpOptVisKFs.end(); it!=itEnd; it++) // visual keyFrame 배열 loop
     {
         KeyFrame* pKFi = *it;
-        VertexPose * VP = new VertexPose(pKFi);
-        VP->setId(pKFi->mnId);
-        VP->setFixed(false);
-        optimizer.addVertex(VP);
+        VertexPose * VP = new VertexPose(pKFi); // keyFrame에 대해 pose Vertex 생성
+        VP->setId(pKFi->mnId); // Vertex의 ID를 keyFrame ID로 설정
+        VP->setFixed(false); // Vertex를 고정하지 않도록 설정
+        optimizer.addVertex(VP); // 옵티마이저에 Vertex 추가
     }
 
     // Set Fixed KeyFrame vertices
-    for(list<KeyFrame*>::iterator lit=lFixedKeyFrames.begin(), lend=lFixedKeyFrames.end(); lit!=lend; lit++)
+    for(list<KeyFrame*>::iterator lit=lFixedKeyFrames.begin(), lend=lFixedKeyFrames.end(); lit!=lend; lit++) // Fixed KeyFrame 배열 loop
     {
         KeyFrame* pKFi = *lit;
-        VertexPose * VP = new VertexPose(pKFi);
-        VP->setId(pKFi->mnId);
-        VP->setFixed(true);
-        optimizer.addVertex(VP);
+        VertexPose * VP = new VertexPose(pKFi); // keyFrame으로 부터 pose Vertex 생성
+        VP->setId(pKFi->mnId); // pose Vertex의 ID를 keyFrame의 ID로 설정
+        VP->setFixed(true); // Vertex를 고정
+        optimizer.addVertex(VP); // 옵티마이저에 Vertex 추가
 
-        if(pKFi->bImu) // This should be done only for keyframe just before temporal window
+        if(pKFi->bImu) // keyFrame이 IMU를 사용하는 경우 // This should be done only for keyframe just before temporal window
         {
-            VertexVelocity* VV = new VertexVelocity(pKFi);
-            VV->setId(maxKFid+3*(pKFi->mnId)+1);
-            VV->setFixed(true);
-            optimizer.addVertex(VV);
-            VertexGyroBias* VG = new VertexGyroBias(pKFi);
-            VG->setId(maxKFid+3*(pKFi->mnId)+2);
-            VG->setFixed(true);
-            optimizer.addVertex(VG);
-            VertexAccBias* VA = new VertexAccBias(pKFi);
-            VA->setId(maxKFid+3*(pKFi->mnId)+3);
-            VA->setFixed(true);
-            optimizer.addVertex(VA);
+            VertexVelocity* VV = new VertexVelocity(pKFi); // keyFrame에 대해 속도 Vertex 생성
+            VV->setId(maxKFid+3*(pKFi->mnId)+1); // Vertex의 ID 설정
+            VV->setFixed(true); // Vertex를 고정
+            optimizer.addVertex(VV); // 옵티마이저에 Vertex 추가
+            VertexGyroBias* VG = new VertexGyroBias(pKFi); // keyFrame에 대해 자이로 bias Vertex 생성
+            VG->setId(maxKFid+3*(pKFi->mnId)+2); // Vertex의 ID 설정
+            VG->setFixed(true); // Vertex를 고정
+            optimizer.addVertex(VG); // 옵티마이저에 Vertex 추가
+            VertexAccBias* VA = new VertexAccBias(pKFi); // keyFrame에 대해 가속도 bias Vertex 생성
+            VA->setId(maxKFid+3*(pKFi->mnId)+3); // Vertex의 ID 설정
+            VA->setFixed(true); // Vertex를 고정
+            optimizer.addVertex(VA); // 옵티마이저에 Vertex 추가
         }
     }
 
     // Create intertial constraints
-    vector<EdgeInertial*> vei(N,(EdgeInertial*)NULL);
-    vector<EdgeGyroRW*> vegr(N,(EdgeGyroRW*)NULL);
-    vector<EdgeAccRW*> vear(N,(EdgeAccRW*)NULL);
+    vector<EdgeInertial*> vei(N,(EdgeInertial*)NULL); // keyFrame간에 속도, pose, Gyro, Acc 데이터를 담는 배열 생성
+    vector<EdgeGyroRW*> vegr(N,(EdgeGyroRW*)NULL); // keyFrame간에 Gyro bias를 담는 배열
+    vector<EdgeAccRW*> vear(N,(EdgeAccRW*)NULL); // keyFrame간에 가속도 bias를 담는 배열
 
-    for(int i=0;i<N;i++)
+    for(int i=0;i<N;i++) // 최적화 대상 keyFrame 배열의 크기만큼 loop
     {
         KeyFrame* pKFi = vpOptimizableKFs[i];
 
-        if(!pKFi->mPrevKF)
+        if(!pKFi->mPrevKF) // keyFrame의 이전 keyFrame이 존재하지 않는 경우
         {
             cout << "NOT INERTIAL LINK TO PREVIOUS FRAME!!!!" << endl;
-            continue;
+            continue; // 무시
         }
-        if(pKFi->bImu && pKFi->mPrevKF->bImu && pKFi->mpImuPreintegrated)
+        if(pKFi->bImu && pKFi->mPrevKF->bImu && pKFi->mpImuPreintegrated) // keyFrame이 IMU를 사용하고 이전 keyFrame도 IMU를 사용하고 Preintegration 객체가 존재하는 경우
         {
-            pKFi->mpImuPreintegrated->SetNewBias(pKFi->mPrevKF->GetImuBias());
-            g2o::HyperGraph::Vertex* VP1 = optimizer.vertex(pKFi->mPrevKF->mnId);
-            g2o::HyperGraph::Vertex* VV1 = optimizer.vertex(maxKFid+3*(pKFi->mPrevKF->mnId)+1);
-            g2o::HyperGraph::Vertex* VG1 = optimizer.vertex(maxKFid+3*(pKFi->mPrevKF->mnId)+2);
-            g2o::HyperGraph::Vertex* VA1 = optimizer.vertex(maxKFid+3*(pKFi->mPrevKF->mnId)+3);
-            g2o::HyperGraph::Vertex* VP2 =  optimizer.vertex(pKFi->mnId);
-            g2o::HyperGraph::Vertex* VV2 = optimizer.vertex(maxKFid+3*(pKFi->mnId)+1);
-            g2o::HyperGraph::Vertex* VG2 = optimizer.vertex(maxKFid+3*(pKFi->mnId)+2);
-            g2o::HyperGraph::Vertex* VA2 = optimizer.vertex(maxKFid+3*(pKFi->mnId)+3);
+            pKFi->mpImuPreintegrated->SetNewBias(pKFi->mPrevKF->GetImuBias()); // keyFrame의 Bias를 이전 keyFrame의 Bias로 설정
+            g2o::HyperGraph::Vertex* VP1 = optimizer.vertex(pKFi->mPrevKF->mnId); // 이전 keyFrame의 pose Vertex를 가져옴
+            g2o::HyperGraph::Vertex* VV1 = optimizer.vertex(maxKFid+3*(pKFi->mPrevKF->mnId)+1); // 이전 keyFrame의 속도 Vertex를 가져옴
+            g2o::HyperGraph::Vertex* VG1 = optimizer.vertex(maxKFid+3*(pKFi->mPrevKF->mnId)+2); // 이전 keyFrame의 자이로 bias Vertex를 가져옴
+            g2o::HyperGraph::Vertex* VA1 = optimizer.vertex(maxKFid+3*(pKFi->mPrevKF->mnId)+3); // 이전 keyFrame의 가속도 bias Vertex를 가져옴
+            g2o::HyperGraph::Vertex* VP2 =  optimizer.vertex(pKFi->mnId); // keyFrame의 pose Vertex를 가져옴
+            g2o::HyperGraph::Vertex* VV2 = optimizer.vertex(maxKFid+3*(pKFi->mnId)+1); // keyFrame의 속도 Vertex를 가져옴
+            g2o::HyperGraph::Vertex* VG2 = optimizer.vertex(maxKFid+3*(pKFi->mnId)+2); // keyFrame의 자이로 bias Vertex를 가져옴
+            g2o::HyperGraph::Vertex* VA2 = optimizer.vertex(maxKFid+3*(pKFi->mnId)+3); // keyFrame의 가속도 bias Vertex를 가져옴
 
-            if(!VP1 || !VV1 || !VG1 || !VA1 || !VP2 || !VV2 || !VG2 || !VA2)
+            if(!VP1 || !VV1 || !VG1 || !VA1 || !VP2 || !VV2 || !VG2 || !VA2) // Vertex가 존재하지 않는 것이 있다면 에러 발생 후 무시
             {
                 cerr << "Error " << VP1 << ", "<< VV1 << ", "<< VG1 << ", "<< VA1 << ", " << VP2 << ", " << VV2 <<  ", "<< VG2 << ", "<< VA2 <<endl;
                 continue;
             }
 
-            vei[i] = new EdgeInertial(pKFi->mpImuPreintegrated);
+            vei[i] = new EdgeInertial(pKFi->mpImuPreintegrated); // keyFrame의 Preintegration 객체를 통해 에지 객체 생성
 
-            vei[i]->setVertex(0,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VP1));
-            vei[i]->setVertex(1,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VV1));
-            vei[i]->setVertex(2,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VG1));
-            vei[i]->setVertex(3,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VA1));
-            vei[i]->setVertex(4,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VP2));
-            vei[i]->setVertex(5,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VV2));
+            vei[i]->setVertex(0,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VP1)); // 에지에 0번째 index로 이전 keyFrame의 pose Vertex 설정
+            vei[i]->setVertex(1,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VV1)); // 에지에 1번째 index로 이전 keyFrame의 속도 Vertex 설정
+            vei[i]->setVertex(2,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VG1)); // 에지에 2번째 index로 이전 keyFrame의 자이로 bias Vertex 설정
+            vei[i]->setVertex(3,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VA1)); // 에지에 3번째 index로 이전 keyFrame의 가속도 bias Vertex 설정
+            vei[i]->setVertex(4,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VP2)); // 에지에 4번째 index로 keyFrame의 pose Vertex 설정
+            vei[i]->setVertex(5,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VV2)); // 에지에 5번째 index로 keyFrame의 속도 Vertex 설정
 
-            if(i==N-1 || bRecInit)
+            if(i==N-1 || bRecInit) // 마지막 loop이거나 Map에 inertialBA2가 이루어지지 않은 경우
             {
                 // All inertial residuals are included without robust cost function, but not that one linking the
                 // last optimizable keyframe inside of the local window and the first fixed keyframe out. The
                 // information matrix for this measurement is also downweighted. This is done to avoid accumulating
                 // error due to fixing variables.
                 g2o::RobustKernelHuber* rki = new g2o::RobustKernelHuber;
-                vei[i]->setRobustKernel(rki);
-                if(i==N-1)
-                    vei[i]->setInformation(vei[i]->information()*1e-2);
-                rki->setDelta(sqrt(16.92));
+                vei[i]->setRobustKernel(rki); // 에지에 Robust 커널 설정
+                if(i==N-1) // 마지막 loop인 경우
+                    vei[i]->setInformation(vei[i]->information()*1e-2); // information 행렬에 가중치를 곱해 재설정
+                rki->setDelta(sqrt(16.92)); // 커널에 Delta 가중치 삽입
             }
-            optimizer.addEdge(vei[i]);
+            optimizer.addEdge(vei[i]); // 옵티마이저에 에지 추가
 
-            vegr[i] = new EdgeGyroRW();
-            vegr[i]->setVertex(0,VG1);
-            vegr[i]->setVertex(1,VG2);
+            vegr[i] = new EdgeGyroRW(); // Gyro Bias 에지 객체 생성
+            vegr[i]->setVertex(0,VG1); // 에지의 0번째 index로 이전 keyFrame의 자이로 Bias Vertex 설정
+            vegr[i]->setVertex(1,VG2); // 에지의 1번째 index로 keyFrame의 자이로 Bias Vertex 설정
             Eigen::Matrix3d InfoG = pKFi->mpImuPreintegrated->C.block<3,3>(9,9).cast<double>().inverse();
-            vegr[i]->setInformation(InfoG);
-            optimizer.addEdge(vegr[i]);
+            vegr[i]->setInformation(InfoG); // information 행렬 설정
+            optimizer.addEdge(vegr[i]); // 옵티마이저에 에지 추가
 
-            vear[i] = new EdgeAccRW();
-            vear[i]->setVertex(0,VA1);
-            vear[i]->setVertex(1,VA2);
+            vear[i] = new EdgeAccRW(); // 가속도 Bias 에지 객체 생성
+            vear[i]->setVertex(0,VA1); // 에지의 0번째 index로 이전 keyFrame의 가속도 Bias Vertex 설정
+            vear[i]->setVertex(1,VA2); // 에지의 1번째 index로 keyFrame의 가속도 Bias Vertex 설정
             Eigen::Matrix3d InfoA = pKFi->mpImuPreintegrated->C.block<3,3>(12,12).cast<double>().inverse();
-            vear[i]->setInformation(InfoA);           
+            vear[i]->setInformation(InfoA); // information 행렬 설정          
 
-            optimizer.addEdge(vear[i]);
+            optimizer.addEdge(vear[i]); // 옵티마이저에 에지 추가
         }
         else
             cout << "ERROR building inertial edge" << endl;
     }
 
     // Set MapPoint vertices
-    const int nExpectedSize = (N+lFixedKeyFrames.size())*lLocalMapPoints.size();
+    const int nExpectedSize = (N+lFixedKeyFrames.size())*lLocalMapPoints.size(); // 배열 크기 결정
 
     // Mono
-    vector<EdgeMono*> vpEdgesMono;
+    vector<EdgeMono*> vpEdgesMono; // 에지 배열 생성
     vpEdgesMono.reserve(nExpectedSize);
 
-    vector<KeyFrame*> vpEdgeKFMono;
+    vector<KeyFrame*> vpEdgeKFMono; // keyFrame 에지 배열 생성
     vpEdgeKFMono.reserve(nExpectedSize);
 
-    vector<MapPoint*> vpMapPointEdgeMono;
+    vector<MapPoint*> vpMapPointEdgeMono; // MapPoint 에지 배열 생성
     vpMapPointEdgeMono.reserve(nExpectedSize);
 
     // Stereo
@@ -2691,76 +2691,76 @@ void Optimizer::LocalInertialBA(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int&
 
 
 
-    const float thHuberMono = sqrt(5.991);
-    const float chi2Mono2 = 5.991;
+    const float thHuberMono = sqrt(5.991); // Monocular threshold 생성
+    const float chi2Mono2 = 5.991; // Monocular 에지 제곱 임계 값
     const float thHuberStereo = sqrt(7.815);
     const float chi2Stereo2 = 7.815;
 
-    const unsigned long iniMPid = maxKFid*5;
+    const unsigned long iniMPid = maxKFid*5; // 초기 MapPoint ID 설정
 
-    map<int,int> mVisEdges;
-    for(int i=0;i<N;i++)
+    map<int,int> mVisEdges; // KeyFrame과 관련된 관측 수를 담는 컨테이너 생성
+    for(int i=0;i<N;i++) // 최적화 대상 keyFrame 배열 크기만큼 loop
     {
-        KeyFrame* pKFi = vpOptimizableKFs[i];
-        mVisEdges[pKFi->mnId] = 0;
+        KeyFrame* pKFi = vpOptimizableKFs[i]; // 최적화 대상 keyFrame을 가져옴
+        mVisEdges[pKFi->mnId] = 0; // keyFrame의 ID에 해당하는 관측 수를 초기화
     }
-    for(list<KeyFrame*>::iterator lit=lFixedKeyFrames.begin(), lend=lFixedKeyFrames.end(); lit!=lend; lit++)
+    for(list<KeyFrame*>::iterator lit=lFixedKeyFrames.begin(), lend=lFixedKeyFrames.end(); lit!=lend; lit++) // Fixed KeyFrame 배열 loop
     {
-        mVisEdges[(*lit)->mnId] = 0;
+        mVisEdges[(*lit)->mnId] = 0;  // keyFrame의 ID에 해당하는 관측 수를 초기화
     }
 
-    for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
+    for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++) // Local MapPoint 배열 loop
     {
         MapPoint* pMP = *lit;
-        g2o::VertexSBAPointXYZ* vPoint = new g2o::VertexSBAPointXYZ();
-        vPoint->setEstimate(pMP->GetWorldPos().cast<double>());
+        g2o::VertexSBAPointXYZ* vPoint = new g2o::VertexSBAPointXYZ(); // MapPoint pose Vertex 생성
+        vPoint->setEstimate(pMP->GetWorldPos().cast<double>()); // MapPoint의 pose를 가져와 Vertex에 설정
 
-        unsigned long id = pMP->mnId+iniMPid+1;
-        vPoint->setId(id);
-        vPoint->setMarginalized(true);
-        optimizer.addVertex(vPoint);
-        const map<KeyFrame*,tuple<int,int>> observations = pMP->GetObservations();
+        unsigned long id = pMP->mnId+iniMPid+1; // MapPoint의 ID와 초기 MapPoint ID를 통해 Vertex ID 생성
+        vPoint->setId(id); // Vertex의 ID를 설정
+        vPoint->setMarginalized(true); // Marginalization을 수행하도록 설정
+        optimizer.addVertex(vPoint); // 옵티마이저에 Vertex 추가
+        const map<KeyFrame*,tuple<int,int>> observations = pMP->GetObservations(); // MapPoint의 관찰 대상 keyFrame을 가져옴
 
         // Create visual constraints
-        for(map<KeyFrame*,tuple<int,int>>::const_iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
+        for(map<KeyFrame*,tuple<int,int>>::const_iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++) // 관찰 대상 keyFrame에 대해 loop
         {
-            KeyFrame* pKFi = mit->first;
+            KeyFrame* pKFi = mit->first; // keyFrame을 가져옴
 
-            if(pKFi->mnBALocalForKF!=pKF->mnId && pKFi->mnBAFixedForKF!=pKF->mnId)
+            if(pKFi->mnBALocalForKF!=pKF->mnId && pKFi->mnBAFixedForKF!=pKF->mnId) // 관찰 대상 keyFrame의 최적화와 Fixed 대상이 keyFrame이면 무시
                 continue;
 
-            if(!pKFi->isBad() && pKFi->GetMap() == pCurrentMap)
+            if(!pKFi->isBad() && pKFi->GetMap() == pCurrentMap) // KeyFrame이 Bad 상태가 아니고 keyFrame의 Map이 현재 Map과 같다면
             {
-                const int leftIndex = get<0>(mit->second);
+                const int leftIndex = get<0>(mit->second); // 왼쪽에서 관찰한 keyPoint의 index를 가져옴
 
                 cv::KeyPoint kpUn;
 
                 // Monocular left observation
-                if(leftIndex != -1 && pKFi->mvuRight[leftIndex]<0)
+                if(leftIndex != -1 && pKFi->mvuRight[leftIndex]<0) // 왼쪽에서 관찰된 경우
                 {
-                    mVisEdges[pKFi->mnId]++;
+                    mVisEdges[pKFi->mnId]++; // keyFrame에 해당하는 관측 수를 증가
 
-                    kpUn = pKFi->mvKeysUn[leftIndex];
+                    kpUn = pKFi->mvKeysUn[leftIndex]; // index에 해당하는 keyPoint를 가져옴
                     Eigen::Matrix<double,2,1> obs;
-                    obs << kpUn.pt.x, kpUn.pt.y;
+                    obs << kpUn.pt.x, kpUn.pt.y; // keyPoint의 좌표를 통해 위치 행렬 생성
 
-                    EdgeMono* e = new EdgeMono(0);
+                    EdgeMono* e = new EdgeMono(0); // Monocular 에지 생성
 
-                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id)));
-                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pKFi->mnId)));
-                    e->setMeasurement(obs);
+                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id))); // MapPoint의 ID를 통해 0번째 에지 구성
+                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pKFi->mnId))); // keyFrame ID를 통해 1번째 에지 구성
+                    e->setMeasurement(obs); // 에지에 위치 행렬을 설정
 
                     // Add here uncerteinty
-                    const float unc2 = pKFi->mpCamera->uncertainty2(obs);
+                    const float unc2 = pKFi->mpCamera->uncertainty2(obs); // 관측된 keyPoint의 uncertainty를 계산
 
-                    const float &invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave]/unc2;
-                    e->setInformation(Eigen::Matrix2d::Identity()*invSigma2);
+                    const float &invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave]/unc2; // keyPoint의 옥타브를 통해 Sigma 값을 가져오고 uncertainty 만큼 나눠서 sigma의 역수를 계산
+                    e->setInformation(Eigen::Matrix2d::Identity()*invSigma2); // information 행렬를 설정
 
                     g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
-                    e->setRobustKernel(rk);
-                    rk->setDelta(thHuberMono);
+                    e->setRobustKernel(rk); // 에지에 Robust 커널을 설정
+                    rk->setDelta(thHuberMono); // 커널에 가중치 설정
 
-                    optimizer.addEdge(e);
+                    optimizer.addEdge(e); // 옵티마이저에 에지 추가
                     vpEdgesMono.push_back(e);
                     vpEdgeKFMono.push_back(pKFi);
                     vpMapPointEdgeMono.push_back(pMP);
@@ -2798,34 +2798,34 @@ void Optimizer::LocalInertialBA(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int&
                 }
 
                 // Monocular right observation
-                if(pKFi->mpCamera2){
-                    int rightIndex = get<1>(mit->second);
+                if(pKFi->mpCamera2){ // 오른쪽 Monocular 관측이 존재한다면
+                    int rightIndex = get<1>(mit->second); // 오른쪽에서 관찰한 keyPoint의 index를 가져옴
 
-                    if(rightIndex != -1 ){
-                        rightIndex -= pKFi->NLeft;
-                        mVisEdges[pKFi->mnId]++;
+                    if(rightIndex != -1 ){ // 오른쪽에서 관찰된 경우
+                        rightIndex -= pKFi->NLeft; // index 수정
+                        mVisEdges[pKFi->mnId]++; // keyFrame에 해당하는 관측 수 증가
 
                         Eigen::Matrix<double,2,1> obs;
-                        cv::KeyPoint kp = pKFi->mvKeysRight[rightIndex];
-                        obs << kp.pt.x, kp.pt.y;
+                        cv::KeyPoint kp = pKFi->mvKeysRight[rightIndex]; // index에 해당하는 keyPoint를 가져옴
+                        obs << kp.pt.x, kp.pt.y; // keyPoint의 좌표를 통해 위치 행렬 생성
 
-                        EdgeMono* e = new EdgeMono(1);
+                        EdgeMono* e = new EdgeMono(1); // Monocular 에지 생성
 
-                        e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id)));
-                        e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pKFi->mnId)));
-                        e->setMeasurement(obs);
+                        e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id))); // MapPoint의 ID를 통해 0번째 에지 구성
+                        e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pKFi->mnId))); // keyFrame ID를 통해 1번째 에지 구성
+                        e->setMeasurement(obs); // 에지에 위치 행렬을 설정
 
                         // Add here uncerteinty
-                        const float unc2 = pKFi->mpCamera->uncertainty2(obs);
+                        const float unc2 = pKFi->mpCamera->uncertainty2(obs); // 관측된 keyPoint의 uncertainty를 계산
 
-                        const float &invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave]/unc2;
-                        e->setInformation(Eigen::Matrix2d::Identity()*invSigma2);
+                        const float &invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave]/unc2; // keyPoint의 옥타브를 통해 Sigma 값을 가져오고 uncertainty 만큼 나눠서 sigma의 역수를 계산
+                        e->setInformation(Eigen::Matrix2d::Identity()*invSigma2); // information 행렬를 설정
 
                         g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
-                        e->setRobustKernel(rk);
-                        rk->setDelta(thHuberMono);
+                        e->setRobustKernel(rk); // 에지에 Robust 커널을 설정
+                        rk->setDelta(thHuberMono); // 커널에 가중치 설정
 
-                        optimizer.addEdge(e);
+                        optimizer.addEdge(e); // 옵티마이저에 에지 추가
                         vpEdgesMono.push_back(e);
                         vpEdgeKFMono.push_back(pKFi);
                         vpMapPointEdgeMono.push_back(pMP);
@@ -2836,16 +2836,16 @@ void Optimizer::LocalInertialBA(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int&
     }
 
     //cout << "Total map points: " << lLocalMapPoints.size() << endl;
-    for(map<int,int>::iterator mit=mVisEdges.begin(), mend=mVisEdges.end(); mit!=mend; mit++)
+    for(map<int,int>::iterator mit=mVisEdges.begin(), mend=mVisEdges.end(); mit!=mend; mit++) // KeyFrame에 대한 관측 횟수를 담은 컨테이너를 loop
     {
-        assert(mit->second>=3);
+        assert(mit->second>=3); // 관측 횟수가 3회 이상인지 확인
     }
 
-    optimizer.initializeOptimization();
-    optimizer.computeActiveErrors();
-    float err = optimizer.activeRobustChi2();
-    optimizer.optimize(opt_it); // Originally to 2
-    float err_end = optimizer.activeRobustChi2();
+    optimizer.initializeOptimization(); // 옵티마이저 최적화
+    optimizer.computeActiveErrors(); // 활성 상태의 오차를 계산
+    float err = optimizer.activeRobustChi2(); // 활성 로버스트 제곱 값을 계산하여 현재 오차를 평가
+    optimizer.optimize(opt_it); // 최적화 진행 // Originally to 2
+    float err_end = optimizer.activeRobustChi2(); // 최적화 결과를 평가
     if(pbStopFlag)
         optimizer.setForceStopFlag(pbStopFlag);
 
@@ -2854,19 +2854,20 @@ void Optimizer::LocalInertialBA(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int&
 
     // Check inlier observations
     // Mono
-    for(size_t i=0, iend=vpEdgesMono.size(); i<iend;i++)
+    for(size_t i=0, iend=vpEdgesMono.size(); i<iend;i++) // Monocular 에지 배열 순회
     {
-        EdgeMono* e = vpEdgesMono[i];
-        MapPoint* pMP = vpMapPointEdgeMono[i];
-        bool bClose = pMP->mTrackDepth<10.f;
+        EdgeMono* e = vpEdgesMono[i]; // 에지를 가져옴
+        MapPoint* pMP = vpMapPointEdgeMono[i]; // 에지에 해당하는 MapPoint를 가져옴
+        bool bClose = pMP->mTrackDepth<10.f; // MapPoint의 Depth가 10보다 작으면 close
 
-        if(pMP->isBad())
+        if(pMP->isBad()) // MapPoint가 Bad 판정인 경우
             continue;
 
-        if((e->chi2()>chi2Mono2 && !bClose) || (e->chi2()>1.5f*chi2Mono2 && bClose) || !e->isDepthPositive())
+        // 에지의 제곱 값이 기준치보다 크고 close 상태가 아니거나 에지의 제곱 값이 가중치의 1.5배보다 크고 close 상태이거나 에지에 Depth가 positive 상태인 경우
+        if((e->chi2()>chi2Mono2 && !bClose) || (e->chi2()>1.5f*chi2Mono2 && bClose) || !e->isDepthPositive()) 
         {
-            KeyFrame* pKFi = vpEdgeKFMono[i];
-            vToErase.push_back(make_pair(pKFi,pMP));
+            KeyFrame* pKFi = vpEdgeKFMono[i]; // 에지에 해당하는 keyFrame을 가져옴
+            vToErase.push_back(make_pair(pKFi,pMP)); // 지워버릴 KeyFrame과 Map으로 설정
         }
     }
 
@@ -2892,75 +2893,77 @@ void Optimizer::LocalInertialBA(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int&
 
 
     // TODO: Some convergence problems have been detected here
+    // (최적화 전 오차의 2배가 최적화 후 오차보다 작거나 오차가 숫자가 아니거나) Map에 InertialBA2가 일어났을 경우
     if((2*err < err_end || isnan(err) || isnan(err_end)) && !bLarge) //bGN)
     {
         cout << "FAIL LOCAL-INERTIAL BA!!!!" << endl;
-        return;
+        return; // 함수 종료
     }
 
 
 
-    if(!vToErase.empty())
+    if(!vToErase.empty()) // 지워버릴 대상이 존재한다면
     {
         for(size_t i=0;i<vToErase.size();i++)
         {
             KeyFrame* pKFi = vToErase[i].first;
             MapPoint* pMPi = vToErase[i].second;
-            pKFi->EraseMapPointMatch(pMPi);
-            pMPi->EraseObservation(pKFi);
+            pKFi->EraseMapPointMatch(pMPi); // keyFrame에서 매칭 MapPoint를 제거
+            pMPi->EraseObservation(pKFi); // MapPoint에서 KeyFrame을 관찰 대상에서 제거
         }
     }
 
-    for(list<KeyFrame*>::iterator lit=lFixedKeyFrames.begin(), lend=lFixedKeyFrames.end(); lit!=lend; lit++)
-        (*lit)->mnBAFixedForKF = 0;
+    for(list<KeyFrame*>::iterator lit=lFixedKeyFrames.begin(), lend=lFixedKeyFrames.end(); lit!=lend; lit++) // Fixed KeyFrame 배열 loop
+        (*lit)->mnBAFixedForKF = 0; // KeyFrame의 Fixed 기준 ID를 초기화
 
     // Recover optimized data
     // Local temporal Keyframes
-    N=vpOptimizableKFs.size();
-    for(int i=0; i<N; i++)
+    N=vpOptimizableKFs.size(); // 옵티마이저 대상 keyFrame 배열의 크기 저장
+    for(int i=0; i<N; i++) // 옵티마이저 대상 keyFrame 배열의 크기만큼 loop
     {
-        KeyFrame* pKFi = vpOptimizableKFs[i];
+        KeyFrame* pKFi = vpOptimizableKFs[i]; // keyFrame을 가져옴
 
-        VertexPose* VP = static_cast<VertexPose*>(optimizer.vertex(pKFi->mnId));
-        Sophus::SE3f Tcw(VP->estimate().Rcw[0].cast<float>(), VP->estimate().tcw[0].cast<float>());
-        pKFi->SetPose(Tcw);
-        pKFi->mnBALocalForKF=0;
+        VertexPose* VP = static_cast<VertexPose*>(optimizer.vertex(pKFi->mnId)); // keyFrame의 ID에 해당하는 pose Vertex를 가져옴
+        Sophus::SE3f Tcw(VP->estimate().Rcw[0].cast<float>(), VP->estimate().tcw[0].cast<float>()); // pose Vertex에서 Pose를 가져옴
+        pKFi->SetPose(Tcw); // keyFrame에 최적화된 pose를 설정
+        pKFi->mnBALocalForKF=0; // keyFrame의 최적화 대상 keyFrame을 초기화
 
-        if(pKFi->bImu)
+        if(pKFi->bImu) // keyFrame이 IMU를 사용하는 경우
         {
-            VertexVelocity* VV = static_cast<VertexVelocity*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+1));
-            pKFi->SetVelocity(VV->estimate().cast<float>());
-            VertexGyroBias* VG = static_cast<VertexGyroBias*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+2));
-            VertexAccBias* VA = static_cast<VertexAccBias*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+3));
+            VertexVelocity* VV = static_cast<VertexVelocity*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+1)); // 최적화된 속도 Vertex를 가져옴
+            pKFi->SetVelocity(VV->estimate().cast<float>()); // keyFrame의 속도를 최적화된 값으로 변경
+            VertexGyroBias* VG = static_cast<VertexGyroBias*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+2)); // 최적화된 Gyro bias Vertex를 가져옴
+            VertexAccBias* VA = static_cast<VertexAccBias*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+3)); // 최적화된 가속도 bias Vertex를 가져옴
             Vector6d b;
-            b << VG->estimate(), VA->estimate();
-            pKFi->SetNewBias(IMU::Bias(b[3],b[4],b[5],b[0],b[1],b[2]));
+            b << VG->estimate(), VA->estimate(); // 새로운 bias 생성
+            pKFi->SetNewBias(IMU::Bias(b[3],b[4],b[5],b[0],b[1],b[2])); // keyFrame의 Bias를 최적화된 값으로 변경
 
         }
     }
 
     // Local visual KeyFrame
-    for(list<KeyFrame*>::iterator it=lpOptVisKFs.begin(), itEnd = lpOptVisKFs.end(); it!=itEnd; it++)
+    for(list<KeyFrame*>::iterator it=lpOptVisKFs.begin(), itEnd = lpOptVisKFs.end(); it!=itEnd; it++) // visual keyFrame 배열 loop
     {
         KeyFrame* pKFi = *it;
-        VertexPose* VP = static_cast<VertexPose*>(optimizer.vertex(pKFi->mnId));
-        Sophus::SE3f Tcw(VP->estimate().Rcw[0].cast<float>(), VP->estimate().tcw[0].cast<float>());
-        pKFi->SetPose(Tcw);
-        pKFi->mnBALocalForKF=0;
+        VertexPose* VP = static_cast<VertexPose*>(optimizer.vertex(pKFi->mnId)); // keyFrame에 해당하는 pose Vertex를 가져옴
+        Sophus::SE3f Tcw(VP->estimate().Rcw[0].cast<float>(), VP->estimate().tcw[0].cast<float>()); // 최적화된 pose 생성
+        pKFi->SetPose(Tcw); // keyFrame의 pose를 최적화된 값으로 변경
+        pKFi->mnBALocalForKF=0; // keyFrame의 최적화 대상을 초기화
     }
 
     //Points
-    for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
+    for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++) // Local MapPoint 배열 loop
     {
         MapPoint* pMP = *lit;
-        g2o::VertexSBAPointXYZ* vPoint = static_cast<g2o::VertexSBAPointXYZ*>(optimizer.vertex(pMP->mnId+iniMPid+1));
-        pMP->SetWorldPos(vPoint->estimate().cast<float>());
-        pMP->UpdateNormalAndDepth();
+        g2o::VertexSBAPointXYZ* vPoint = static_cast<g2o::VertexSBAPointXYZ*>(optimizer.vertex(pMP->mnId+iniMPid+1)); // MapPoint의 pose Vertex를 가져옴
+        pMP->SetWorldPos(vPoint->estimate().cast<float>()); // 최적화된 값으로 pose를 설정
+        pMP->UpdateNormalAndDepth(); // MapPoint의 Normal과 Depth를 update
     }
 
-    pMap->IncreaseChangeIndex();
+    pMap->IncreaseChangeIndex(); // Map의 Index를 변경
 }
 
+// 주어진 H행렬을 기반으로 3개의 블록을 생성한 후 일부 블록을 제거하여 새로운 행렬을 만드는 함수 (일부 블록을 margin하여 남은 부분 행렬을 새로운 행렬로 만드는 것)
 Eigen::MatrixXd Optimizer::Marginalize(const Eigen::MatrixXd &H, const int &start, const int &end)
 {
     // Goal
@@ -2969,49 +2972,49 @@ Eigen::MatrixXd Optimizer::Marginalize(const Eigen::MatrixXd &H, const int &star
     // ca | cb | c        ca* | 0 | c*
 
     // Size of block before block to marginalize
-    const int a = start;
+    const int a = start; // margin할 블록의 시작 위치 설정
     // Size of block to marginalize
-    const int b = end-start+1;
+    const int b = end-start+1; // margin할 블록의 끝 위치 설정
     // Size of block after block to marginalize
-    const int c = H.cols() - (end+1);
+    const int c = H.cols() - (end+1); // margin하지 않는 부분의 끝 지점에서 H행렬의 끝 지점까지의 거리
 
     // Reorder as follows:
     // a  | ab | ac       a  | ac | ab
     // ba | b  | bc  -->  ca | c  | cb
     // ca | cb | c        ba | bc | b
 
-    Eigen::MatrixXd Hn = Eigen::MatrixXd::Zero(H.rows(),H.cols());
+    Eigen::MatrixXd Hn = Eigen::MatrixXd::Zero(H.rows(),H.cols()); // H의 크기와 동일한 크기의 새로운 행렬 Hn을 생성
     if(a>0)
     {
-        Hn.block(0,0,a,a) = H.block(0,0,a,a);
-        Hn.block(0,a+c,a,b) = H.block(0,a,a,b);
-        Hn.block(a+c,0,b,a) = H.block(a,0,b,a);
+        Hn.block(0,0,a,a) = H.block(0,0,a,a); // H의 좌측 상단에 위치한 a x a 크기의 블록을 새로운 행렬 Hn의 좌측 상단에 복사
+        Hn.block(0,a+c,a,b) = H.block(0,a,a,b); // a열 다음에 c열이 위치한 곳에서부터 시작하여 a x b 크기의 블록을 새로운 행렬 Hn의 a+c열 다음에 복사
+        Hn.block(a+c,0,b,a) = H.block(a,0,b,a); // a행 다음에 있는 행에서부터 시작하여 b x a 크기의 블록을 새로운 행렬 Hn의 a+c행 다음에 복사
     }
     if(a>0 && c>0)
     {
-        Hn.block(0,a,a,c) = H.block(0,a+b,a,c);
-        Hn.block(a,0,c,a) = H.block(a+b,0,c,a);
+        Hn.block(0,a,a,c) = H.block(0,a+b,a,c); // H의 a열 다음에 c열이 시작되는 위치에서부터 a x c 크기의 블록을 새로운 행렬 Hn의 0행과 a열 사이에 복사
+        Hn.block(a,0,c,a) = H.block(a+b,0,c,a); // H의 a+b행 다음에 있는 행에서부터 시작하여 c x a 크기의 블록을 새로운 행렬 Hn의 a행과 0열 사이에 복사
     }
     if(c>0)
     {
-        Hn.block(a,a,c,c) = H.block(a+b,a+b,c,c);
-        Hn.block(a,a+c,c,b) = H.block(a+b,a,c,b);
-        Hn.block(a+c,a,b,c) = H.block(a,a+b,b,c);
+        Hn.block(a,a,c,c) = H.block(a+b,a+b,c,c); // H의 (a+b)행과 (a+b)열에서 시작하여 c x c 크기의 블록을 새로운 행렬 Hn의 (a, a) 위치에 복사
+        Hn.block(a,a+c,c,b) = H.block(a+b,a,c,b); // H의 (a+b)행과 a열 다음에 있는 열에서 시작하여 c x b 크기의 블록을 새로운 행렬 Hn의 (a, a+c) 위치에 복사
+        Hn.block(a+c,a,b,c) = H.block(a,a+b,b,c); // H의 a행과 (a+b)열 다음에 있는 행에서 시작하여 b x c 크기의 블록을 새로운 행렬 Hn의 (a+c, a) 위치에 복사
     }
-    Hn.block(a+c,a+c,b,b) = H.block(a,a,b,b);
+    Hn.block(a+c,a+c,b,b) = H.block(a,a,b,b); // H의 (a, a) 위치에서 시작하여 b x b 크기의 블록을 복사
 
     // Perform marginalization (Schur complement)
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(Hn.block(a+c,a+c,b,b),Eigen::ComputeThinU | Eigen::ComputeThinV);
-    Eigen::JacobiSVD<Eigen::MatrixXd>::SingularValuesType singularValues_inv=svd.singularValues();
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(Hn.block(a+c,a+c,b,b),Eigen::ComputeThinU | Eigen::ComputeThinV); // 주어진 블록에 대한 특이값 분해
+    Eigen::JacobiSVD<Eigen::MatrixXd>::SingularValuesType singularValues_inv=svd.singularValues(); // 특이값 중에서 작은 값을 뽑음
     for (int i=0; i<b; ++i)
     {
-        if (singularValues_inv(i)>1e-6)
-            singularValues_inv(i)=1.0/singularValues_inv(i);
-        else singularValues_inv(i)=0;
+        if (singularValues_inv(i)>1e-6) // 임계치보다 크면
+            singularValues_inv(i)=1.0/singularValues_inv(i); // 역행렬 설정
+        else singularValues_inv(i)=0; //  너무 작은 값은 0으로 설정
     }
-    Eigen::MatrixXd invHb = svd.matrixV()*singularValues_inv.asDiagonal()*svd.matrixU().transpose();
-    Hn.block(0,0,a+c,a+c) = Hn.block(0,0,a+c,a+c) - Hn.block(0,a+c,a+c,b)*invHb*Hn.block(a+c,0,b,a+c);
-    Hn.block(a+c,a+c,b,b) = Eigen::MatrixXd::Zero(b,b);
+    Eigen::MatrixXd invHb = svd.matrixV()*singularValues_inv.asDiagonal()*svd.matrixU().transpose(); // 특이값 분해를 사용하여 계산된 행렬의 역행렬
+    Hn.block(0,0,a+c,a+c) = Hn.block(0,0,a+c,a+c) - Hn.block(0,a+c,a+c,b)*invHb*Hn.block(a+c,0,b,a+c); // marginalize되는 부분을 제거하고, 역행렬과의 곱을 통해 업데이트
+    Hn.block(a+c,a+c,b,b) = Eigen::MatrixXd::Zero(b,b); // marginalize된 부분은 0으로 설정하여 제거
     Hn.block(0,a+c,a+c,b) = Eigen::MatrixXd::Zero(a+c,b);
     Hn.block(a+c,0,b,a+c) = Eigen::MatrixXd::Zero(b,a+c);
 
@@ -3019,7 +3022,8 @@ Eigen::MatrixXd Optimizer::Marginalize(const Eigen::MatrixXd &H, const int &star
     // a*  | ac* | 0       a*  | 0 | ac*
     // ca* | c*  | 0  -->  0   | 0 | 0
     // 0   | 0   | 0       ca* | 0 | c*
-    Eigen::MatrixXd res = Eigen::MatrixXd::Zero(H.rows(),H.cols());
+    Eigen::MatrixXd res = Eigen::MatrixXd::Zero(H.rows(),H.cols()); 
+    // marginalize 한 후 결과를 새로운 행렬 res에 저장
     if(a>0)
     {
         res.block(0,0,a,a) = Hn.block(0,0,a,a);
@@ -3040,7 +3044,7 @@ Eigen::MatrixXd Optimizer::Marginalize(const Eigen::MatrixXd &H, const int &star
 
     res.block(a,a,b,b) = Hn.block(a+c,a+c,b,b);
 
-    return res;
+    return res; // marginalize된 부분을 제외한 수정된 행렬 res를 반환
 }
 
 void Optimizer::InertialOptimization(Map *pMap, Eigen::Matrix3d &Rwg, double &scale, Eigen::Vector3d &bg, Eigen::Vector3d &ba, bool bMono, Eigen::MatrixXd  &covInertial, bool bFixedVel, bool bGauss, float priorG, float priorA)
@@ -3948,116 +3952,116 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pMainKF,vector<KeyFrame*> vpAdju
     }
 }
 
-
+// 현재 KeyFrames과 이전 keyFrame, Merge KeyFrame과 이전 KeyFrame의 pose 및 IMU bias, MapPoint pose를 최적화하는 함수
 void Optimizer::MergeInertialBA(KeyFrame* pCurrKF, KeyFrame* pMergeKF, bool *pbStopFlag, Map *pMap, LoopClosing::KeyFrameAndPose &corrPoses)
 {
     const int Nd = 6;
-    const unsigned long maxKFid = pCurrKF->mnId;
+    const unsigned long maxKFid = pCurrKF->mnId; // 현재 KeyFrame의 ID를 저장
 
-    vector<KeyFrame*> vpOptimizableKFs;
+    vector<KeyFrame*> vpOptimizableKFs; // 최적화 대상 KeyFrame 배열 생성
     vpOptimizableKFs.reserve(2*Nd);
 
     // For cov KFS, inertial parameters are not optimized
     const int maxCovKF = 30;
-    vector<KeyFrame*> vpOptimizableCovKFs;
+    vector<KeyFrame*> vpOptimizableCovKFs; // IMU 파라미터를 최적화하지 않을 KeyFrame 배열 생성
     vpOptimizableCovKFs.reserve(maxCovKF);
 
     // Add sliding window for current KF
-    vpOptimizableKFs.push_back(pCurrKF);
-    pCurrKF->mnBALocalForKF = pCurrKF->mnId;
-    for(int i=1; i<Nd; i++)
+    vpOptimizableKFs.push_back(pCurrKF); // 현재 KeyFrame을 최적화 대상 배열에 삽입
+    pCurrKF->mnBALocalForKF = pCurrKF->mnId; // 현재 KeyFrame의 최적화 대상 keyFrame을 현재 KeyFrame으로 설정
+    for(int i=1; i<Nd; i++) // 6회 반복
     {
-        if(vpOptimizableKFs.back()->mPrevKF)
+        if(vpOptimizableKFs.back()->mPrevKF) // 최적화 대상 KeyFrame의 이전 keyFrame이 존재하는 경우
         {
-            vpOptimizableKFs.push_back(vpOptimizableKFs.back()->mPrevKF);
-            vpOptimizableKFs.back()->mnBALocalForKF = pCurrKF->mnId;
+            vpOptimizableKFs.push_back(vpOptimizableKFs.back()->mPrevKF); // 이전 keyFrame을 최적화 대상 배열에 삽입
+            vpOptimizableKFs.back()->mnBALocalForKF = pCurrKF->mnId; // 이전 KeyFrame의 최적화 대상 keyFrame을 현재 KeyFrame으로 설정
         }
         else
-            break;
+            break; // 반복 종료
     }
 
     list<KeyFrame*> lFixedKeyFrames;
-    if(vpOptimizableKFs.back()->mPrevKF)
+    if(vpOptimizableKFs.back()->mPrevKF) // 가장 마지막에 삽입된 keyFrame의 이전 keyFrame이 존재하는 경우
     {
-        vpOptimizableCovKFs.push_back(vpOptimizableKFs.back()->mPrevKF);
-        vpOptimizableKFs.back()->mPrevKF->mnBALocalForKF=pCurrKF->mnId;
+        vpOptimizableCovKFs.push_back(vpOptimizableKFs.back()->mPrevKF); // IMU 파라미터를 최적화하지 않을 배열에 이전 keyFrame을 삽입
+        vpOptimizableKFs.back()->mPrevKF->mnBALocalForKF=pCurrKF->mnId; // 이전 keyFrame의 최적화 대상 keyFrame을 현재 KeyFrame으로 설정
     }
     else
     {
-        vpOptimizableCovKFs.push_back(vpOptimizableKFs.back());
-        vpOptimizableKFs.pop_back();
+        vpOptimizableCovKFs.push_back(vpOptimizableKFs.back()); // IMU 파라미터를 최적화하지 않을 배열에 keyFrame을 삽입
+        vpOptimizableKFs.pop_back(); // 최적화 대상 keyFrame에서 keyFrame을 제거
     }
 
     // Add temporal neighbours to merge KF (previous and next KFs)
-    vpOptimizableKFs.push_back(pMergeKF);
-    pMergeKF->mnBALocalForKF = pCurrKF->mnId;
+    vpOptimizableKFs.push_back(pMergeKF); // Merge KeyFrame을 최적화 대상 배열에 삽입
+    pMergeKF->mnBALocalForKF = pCurrKF->mnId; // Merge KeyFrame의 최적화 대상 keyFrame을 현재 KeyFrame으로 설정
 
     // Previous KFs
-    for(int i=1; i<(Nd/2); i++)
+    for(int i=1; i<(Nd/2); i++) // 3회 반복
     {
-        if(vpOptimizableKFs.back()->mPrevKF)
+        if(vpOptimizableKFs.back()->mPrevKF) // 최적화 대상 keyFrame의 이전 keyFrame이 존재하는 경우
         {
-            vpOptimizableKFs.push_back(vpOptimizableKFs.back()->mPrevKF);
-            vpOptimizableKFs.back()->mnBALocalForKF = pCurrKF->mnId;
+            vpOptimizableKFs.push_back(vpOptimizableKFs.back()->mPrevKF); // 최적화 대상 배열에 이전 keyFrame을 삽입
+            vpOptimizableKFs.back()->mnBALocalForKF = pCurrKF->mnId; // 이전 keyFrame의 최적화 대상 keyFrame을 현재 KeyFrame으로 설정
         }
         else
-            break;
+            break; // 반복 종료
     }
 
     // We fix just once the old map
-    if(vpOptimizableKFs.back()->mPrevKF)
+    if(vpOptimizableKFs.back()->mPrevKF) // 가장 마지막에 삽입된 keyFrame의 이전 keyFrame이 존재하는 경우
     {
-        lFixedKeyFrames.push_back(vpOptimizableKFs.back()->mPrevKF);
-        vpOptimizableKFs.back()->mPrevKF->mnBAFixedForKF=pCurrKF->mnId;
+        lFixedKeyFrames.push_back(vpOptimizableKFs.back()->mPrevKF); // Fixed KeyFrame 배열에 이전 keyFrame을 삽입
+        vpOptimizableKFs.back()->mPrevKF->mnBAFixedForKF=pCurrKF->mnId; // 이전 keyFrame의 Fixed 대상 keyFrame을 현재 KeyFrame으로 설정
     }
     else
     {
-        vpOptimizableKFs.back()->mnBALocalForKF=0;
-        vpOptimizableKFs.back()->mnBAFixedForKF=pCurrKF->mnId;
-        lFixedKeyFrames.push_back(vpOptimizableKFs.back());
-        vpOptimizableKFs.pop_back();
+        vpOptimizableKFs.back()->mnBALocalForKF=0; // 최적화 대상 배열에 가장 마지막에 삽입된 keyFrame의 최적화 대상을 초기화
+        vpOptimizableKFs.back()->mnBAFixedForKF=pCurrKF->mnId; // keyFrame의 Fixed 대상 keyFrame을 현재 KeyFrame으로 설정
+        lFixedKeyFrames.push_back(vpOptimizableKFs.back()); // Fixed KeyFrame 배열에 keyFrame을 삽입
+        vpOptimizableKFs.pop_back(); // 최적화 대상에서 제거
     }
 
     // Next KFs
-    if(pMergeKF->mNextKF)
+    if(pMergeKF->mNextKF) // Merge KeyFrame의 다음 KeyFrame이 존재하는 경우
     {
-        vpOptimizableKFs.push_back(pMergeKF->mNextKF);
-        vpOptimizableKFs.back()->mnBALocalForKF = pCurrKF->mnId;
+        vpOptimizableKFs.push_back(pMergeKF->mNextKF); // 다음 keyFrame을 최적화 대상 배열에 삽입
+        vpOptimizableKFs.back()->mnBALocalForKF = pCurrKF->mnId; // 다음 KeyFrame의 최적화 대상을 현재 keyFrame으로 설정
     }
 
-    while(vpOptimizableKFs.size()<(2*Nd))
+    while(vpOptimizableKFs.size()<(2*Nd)) // 최적화 대상이 12개 미만이면 loop
     {
-        if(vpOptimizableKFs.back()->mNextKF)
+        if(vpOptimizableKFs.back()->mNextKF) // 마지막에 삽입된 최적화 대상 keyFrame의 다음 keyFrame이 존재하는 경우
         {
-            vpOptimizableKFs.push_back(vpOptimizableKFs.back()->mNextKF);
-            vpOptimizableKFs.back()->mnBALocalForKF = pCurrKF->mnId;
+            vpOptimizableKFs.push_back(vpOptimizableKFs.back()->mNextKF); // 다음 keyFrame을 최적화 대상 배열에 삽입
+            vpOptimizableKFs.back()->mnBALocalForKF = pCurrKF->mnId; // 최적화 대상을 현재 KeyFrame으로 설정
         }
         else
             break;
     }
 
-    int N = vpOptimizableKFs.size();
+    int N = vpOptimizableKFs.size(); // 최적화 대상 수를 저장
 
     // Optimizable points seen by optimizable keyframes
     list<MapPoint*> lLocalMapPoints;
     map<MapPoint*,int> mLocalObs;
-    for(int i=0; i<N; i++)
+    for(int i=0; i<N; i++) // 최적화 대상 배열의 크기만큼 loop
     {
-        vector<MapPoint*> vpMPs = vpOptimizableKFs[i]->GetMapPointMatches();
-        for(vector<MapPoint*>::iterator vit=vpMPs.begin(), vend=vpMPs.end(); vit!=vend; vit++)
+        vector<MapPoint*> vpMPs = vpOptimizableKFs[i]->GetMapPointMatches(); // 최적화 대상 keyFrame의 매칭 MapPoint를 가져옴
+        for(vector<MapPoint*>::iterator vit=vpMPs.begin(), vend=vpMPs.end(); vit!=vend; vit++) // 매칭 MapPoint의 계수만큼 loop
         {
             // Using mnBALocalForKF we avoid redundance here, one MP can not be added several times to lLocalMapPoints
             MapPoint* pMP = *vit;
-            if(pMP)
-                if(!pMP->isBad())
-                    if(pMP->mnBALocalForKF!=pCurrKF->mnId)
+            if(pMP) // MapPoint가 존재하고
+                if(!pMP->isBad()) // Bad 상태가 아닌 경우
+                    if(pMP->mnBALocalForKF!=pCurrKF->mnId) // MapPoint의 최적화 대상이 현재 KeyFrame이 아닌 경우
                     {
-                        mLocalObs[pMP]=1;
-                        lLocalMapPoints.push_back(pMP);
-                        pMP->mnBALocalForKF=pCurrKF->mnId;
+                        mLocalObs[pMP]=1; // MapPoint를 최적화 대상으로 설정
+                        lLocalMapPoints.push_back(pMP); // 최적화 대상 MapPoint 배열에 추가
+                        pMP->mnBALocalForKF=pCurrKF->mnId; // 최적화 대상을 현재 KeyFrame으로 설정
                     }
                     else {
-                        mLocalObs[pMP]++;
+                        mLocalObs[pMP]++; // 이미 최적화 대상으로 설정된 MapPoint의 경우, 그 계수를 증가
                     }
         }
     }
@@ -4065,187 +4069,187 @@ void Optimizer::MergeInertialBA(KeyFrame* pCurrKF, KeyFrame* pMergeKF, bool *pbS
     std::vector<std::pair<MapPoint*, int>> pairs;
     pairs.reserve(mLocalObs.size());
     for (auto itr = mLocalObs.begin(); itr != mLocalObs.end(); ++itr)
-        pairs.push_back(*itr);
-    sort(pairs.begin(), pairs.end(),sortByVal);
+        pairs.push_back(*itr); // 최적화 대상 MapPoint를 배열에 삽입
+    sort(pairs.begin(), pairs.end(),sortByVal); // 계수에 따라 정렬
 
     // Fixed Keyframes. Keyframes that see Local MapPoints but that are not Local Keyframes
     int i=0;
-    for(vector<pair<MapPoint*,int>>::iterator lit=pairs.begin(), lend=pairs.end(); lit!=lend; lit++, i++)
+    for(vector<pair<MapPoint*,int>>::iterator lit=pairs.begin(), lend=pairs.end(); lit!=lend; lit++, i++) // 최적화 대상 MapPoint 배열 loop
     {
-        map<KeyFrame*,tuple<int,int>> observations = lit->first->GetObservations();
+        map<KeyFrame*,tuple<int,int>> observations = lit->first->GetObservations(); // MapPoint의 추적 대상 KeyFrame을 가져옴
         if(i>=maxCovKF)
             break;
-        for(map<KeyFrame*,tuple<int,int>>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
+        for(map<KeyFrame*,tuple<int,int>>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++) // 추적대상 KeyFrame 배열 loop
         {
             KeyFrame* pKFi = mit->first;
 
-            if(pKFi->mnBALocalForKF!=pCurrKF->mnId && pKFi->mnBAFixedForKF!=pCurrKF->mnId) // If optimizable or already included...
+            if(pKFi->mnBALocalForKF!=pCurrKF->mnId && pKFi->mnBAFixedForKF!=pCurrKF->mnId) // keyFrame의 최적화와 Fixed 대상이 현재 keyFrame이 아니면 // If optimizable or already included...
             {
-                pKFi->mnBALocalForKF=pCurrKF->mnId;
-                if(!pKFi->isBad())
+                pKFi->mnBALocalForKF=pCurrKF->mnId; // KeyFrame의 최적화 대상을 현재 keyFrame으로 설정
+                if(!pKFi->isBad()) // keyFrame이 Bad 상태가 아닌경우
                 {
-                    vpOptimizableCovKFs.push_back(pKFi);
-                    break;
+                    vpOptimizableCovKFs.push_back(pKFi); // IMU 파라미터를 최적화 하지 않을 배열에 삽입
+                    break; // 반복 종료
                 }
             }
         }
     }
 
-    g2o::SparseOptimizer optimizer;
+    g2o::SparseOptimizer optimizer; // 옵티마이저 생성
     g2o::BlockSolverX::LinearSolverType * linearSolver;
-    linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
+    linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>(); // Linear Solver 생성
 
-    g2o::BlockSolverX * solver_ptr = new g2o::BlockSolverX(linearSolver);
+    g2o::BlockSolverX * solver_ptr = new g2o::BlockSolverX(linearSolver); // Linear Solver를 통해 Block 객체 생성
 
-    g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+    g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr); // Levenberg 알고리즘 객체 생성
 
-    solver->setUserLambdaInit(1e3);
+    solver->setUserLambdaInit(1e3); // 알고리즘의 Lambda값 설정
 
-    optimizer.setAlgorithm(solver);
-    optimizer.setVerbose(false);
+    optimizer.setAlgorithm(solver); // 옵티마이저에 알고리즘 설정
+    optimizer.setVerbose(false); // 최적화 과정을 출력하지 않도록 설정
 
     // Set Local KeyFrame vertices
-    N=vpOptimizableKFs.size();
-    for(int i=0; i<N; i++)
+    N=vpOptimizableKFs.size(); // 최적화 대상 keyFrame 수 저장
+    for(int i=0; i<N; i++) // 최적화 대상 keyFrame의 수만큼 loop
     {
         KeyFrame* pKFi = vpOptimizableKFs[i];
 
-        VertexPose * VP = new VertexPose(pKFi);
-        VP->setId(pKFi->mnId);
-        VP->setFixed(false);
-        optimizer.addVertex(VP);
+        VertexPose * VP = new VertexPose(pKFi); // KeyFrame pose Vertex를 생성
+        VP->setId(pKFi->mnId); // Vertex의 ID 설정
+        VP->setFixed(false); // Vertex를 고정하지 않는다고 설정
+        optimizer.addVertex(VP); // 옵티마이저에 Vertex 추가
 
-        if(pKFi->bImu)
+        if(pKFi->bImu) // KeyFrame이 IMU를 사용하는 경우
         {
-            VertexVelocity* VV = new VertexVelocity(pKFi);
-            VV->setId(maxKFid+3*(pKFi->mnId)+1);
-            VV->setFixed(false);
-            optimizer.addVertex(VV);
-            VertexGyroBias* VG = new VertexGyroBias(pKFi);
-            VG->setId(maxKFid+3*(pKFi->mnId)+2);
-            VG->setFixed(false);
-            optimizer.addVertex(VG);
-            VertexAccBias* VA = new VertexAccBias(pKFi);
-            VA->setId(maxKFid+3*(pKFi->mnId)+3);
-            VA->setFixed(false);
-            optimizer.addVertex(VA);
+            VertexVelocity* VV = new VertexVelocity(pKFi); // KeyFrame의 속도 Vertex를 생성
+            VV->setId(maxKFid+3*(pKFi->mnId)+1); // Vertex의 ID 설정
+            VV->setFixed(false); // Vertex를 고정하지 않는다고 설정
+            optimizer.addVertex(VV); // 옵티마이저에 Vertex 추가
+            VertexGyroBias* VG = new VertexGyroBias(pKFi); // KeyFrame의 Gyro Bias Vertex를 생성
+            VG->setId(maxKFid+3*(pKFi->mnId)+2); // Vertex의 ID 설정
+            VG->setFixed(false); // Vertex를 고정하지 않는다고 설정
+            optimizer.addVertex(VG); // 옵티마이저에 Vertex 추가
+            VertexAccBias* VA = new VertexAccBias(pKFi); // KeyFrame의 가속도 Bias Vertex를 생성
+            VA->setId(maxKFid+3*(pKFi->mnId)+3); // Vertex의 ID 설정
+            VA->setFixed(false); // Vertex를 고정하지 않는다고 설정
+            optimizer.addVertex(VA); // 옵티마이저에 Vertex 추가
         }
     }
 
     // Set Local cov keyframes vertices
-    int Ncov=vpOptimizableCovKFs.size();
-    for(int i=0; i<Ncov; i++)
+    int Ncov=vpOptimizableCovKFs.size(); // IMU 파라미터를 최적화 하지 않을 keyFrame 수 저장
+    for(int i=0; i<Ncov; i++) // keyFrame의 수만큼 loop
     {
         KeyFrame* pKFi = vpOptimizableCovKFs[i];
 
-        VertexPose * VP = new VertexPose(pKFi);
-        VP->setId(pKFi->mnId);
-        VP->setFixed(false);
-        optimizer.addVertex(VP);
+        VertexPose * VP = new VertexPose(pKFi); // KeyFrame pose Vertex를 생성
+        VP->setId(pKFi->mnId); // Vertex의 ID 설정
+        VP->setFixed(false); // Vertex를 고정하지 않는다고 설정
+        optimizer.addVertex(VP); // 옵티마이저에 Vertex 추가
 
-        if(pKFi->bImu)
+        if(pKFi->bImu) // KeyFrame이 IMU를 사용하는 경우
         {
-            VertexVelocity* VV = new VertexVelocity(pKFi);
-            VV->setId(maxKFid+3*(pKFi->mnId)+1);
-            VV->setFixed(false);
-            optimizer.addVertex(VV);
-            VertexGyroBias* VG = new VertexGyroBias(pKFi);
-            VG->setId(maxKFid+3*(pKFi->mnId)+2);
-            VG->setFixed(false);
-            optimizer.addVertex(VG);
-            VertexAccBias* VA = new VertexAccBias(pKFi);
-            VA->setId(maxKFid+3*(pKFi->mnId)+3);
-            VA->setFixed(false);
-            optimizer.addVertex(VA);
+            VertexVelocity* VV = new VertexVelocity(pKFi); // KeyFrame의 속도 Vertex를 생성
+            VV->setId(maxKFid+3*(pKFi->mnId)+1); // Vertex의 ID 설정
+            VV->setFixed(false); // Vertex를 고정하지 않는다고 설정
+            optimizer.addVertex(VV); // 옵티마이저에 Vertex 추가
+            VertexGyroBias* VG = new VertexGyroBias(pKFi); // KeyFrame의 Gyro Bias Vertex를 생성
+            VG->setId(maxKFid+3*(pKFi->mnId)+2); // Vertex의 ID 설정
+            VG->setFixed(false); // Vertex를 고정하지 않는다고 설정
+            optimizer.addVertex(VG); // 옵티마이저에 Vertex 추가
+            VertexAccBias* VA = new VertexAccBias(pKFi); // KeyFrame의 가속도 Bias Vertex를 생성
+            VA->setId(maxKFid+3*(pKFi->mnId)+3); // Vertex의 ID 설정
+            VA->setFixed(false); // Vertex를 고정하지 않는다고 설정
+            optimizer.addVertex(VA); // 옵티마이저에 Vertex 추가
         }
     }
 
     // Set Fixed KeyFrame vertices
-    for(list<KeyFrame*>::iterator lit=lFixedKeyFrames.begin(), lend=lFixedKeyFrames.end(); lit!=lend; lit++)
+    for(list<KeyFrame*>::iterator lit=lFixedKeyFrames.begin(), lend=lFixedKeyFrames.end(); lit!=lend; lit++) // Fiexed KeyFrame 배열을 loop
     {
         KeyFrame* pKFi = *lit;
-        VertexPose * VP = new VertexPose(pKFi);
-        VP->setId(pKFi->mnId);
-        VP->setFixed(true);
-        optimizer.addVertex(VP);
+        VertexPose * VP = new VertexPose(pKFi); // KeyFrame pose Vertex를 생성
+        VP->setId(pKFi->mnId); // Vertex의 ID 설정
+        VP->setFixed(true); // Vertex를 고정한다고 설정
+        optimizer.addVertex(VP); // 옵티마이저에 Vertex 추가
 
-        if(pKFi->bImu)
+        if(pKFi->bImu) // KeyFrame이 IMU를 사용하는 경우
         {
-            VertexVelocity* VV = new VertexVelocity(pKFi);
-            VV->setId(maxKFid+3*(pKFi->mnId)+1);
-            VV->setFixed(true);
-            optimizer.addVertex(VV);
-            VertexGyroBias* VG = new VertexGyroBias(pKFi);
-            VG->setId(maxKFid+3*(pKFi->mnId)+2);
-            VG->setFixed(true);
-            optimizer.addVertex(VG);
-            VertexAccBias* VA = new VertexAccBias(pKFi);
-            VA->setId(maxKFid+3*(pKFi->mnId)+3);
-            VA->setFixed(true);
-            optimizer.addVertex(VA);
+            VertexVelocity* VV = new VertexVelocity(pKFi); // KeyFrame의 속도 Vertex를 생성
+            VV->setId(maxKFid+3*(pKFi->mnId)+1); // Vertex의 ID 설정
+            VV->setFixed(true); // Vertex를 고정한다고 설정
+            optimizer.addVertex(VV); // 옵티마이저에 Vertex 추가
+            VertexGyroBias* VG = new VertexGyroBias(pKFi); // KeyFrame의 Gyro Bias Vertex를 생성
+            VG->setId(maxKFid+3*(pKFi->mnId)+2); // Vertex의 ID 설정
+            VG->setFixed(true); // Vertex를 고정한다고 설정
+            optimizer.addVertex(VG); // 옵티마이저에 Vertex 추가
+            VertexAccBias* VA = new VertexAccBias(pKFi); // KeyFrame의 가속도 Bias Vertex를 생성
+            VA->setId(maxKFid+3*(pKFi->mnId)+3); // Vertex의 ID 설정
+            VA->setFixed(true); // Vertex를 고정한다고 설정
+            optimizer.addVertex(VA); // 옵티마이저에 Vertex 추가
         }
     }
 
     // Create intertial constraints
-    vector<EdgeInertial*> vei(N,(EdgeInertial*)NULL);
-    vector<EdgeGyroRW*> vegr(N,(EdgeGyroRW*)NULL);
-    vector<EdgeAccRW*> vear(N,(EdgeAccRW*)NULL);
+    vector<EdgeInertial*> vei(N,(EdgeInertial*)NULL); // keyFrame의 position 및 IMU Bias Vertex를 담을 배열 초기화
+    vector<EdgeGyroRW*> vegr(N,(EdgeGyroRW*)NULL); // Gyro Bias를 담을 배열 초기화
+    vector<EdgeAccRW*> vear(N,(EdgeAccRW*)NULL); // 가속도 Bias를 담을 배열 초기화
     for(int i=0;i<N;i++)
     {
         //cout << "inserting inertial edge " << i << endl;
-        KeyFrame* pKFi = vpOptimizableKFs[i];
+        KeyFrame* pKFi = vpOptimizableKFs[i]; // 최적화 대상 keyFrame을 가져옴
 
-        if(!pKFi->mPrevKF)
+        if(!pKFi->mPrevKF) // 이전 keyFrame이 존재하지 않으면 무시
         {
             Verbose::PrintMess("NOT INERTIAL LINK TO PREVIOUS FRAME!!!!", Verbose::VERBOSITY_NORMAL);
             continue;
         }
-        if(pKFi->bImu && pKFi->mPrevKF->bImu && pKFi->mpImuPreintegrated)
+        if(pKFi->bImu && pKFi->mPrevKF->bImu && pKFi->mpImuPreintegrated) // keyFrame이 Bad 상태가 아니고 이전 keyFrame이 IMU를 사용하고 Preintegration 객체가 존재한다면
         {
-            pKFi->mpImuPreintegrated->SetNewBias(pKFi->mPrevKF->GetImuBias());
-            g2o::HyperGraph::Vertex* VP1 = optimizer.vertex(pKFi->mPrevKF->mnId);
-            g2o::HyperGraph::Vertex* VV1 = optimizer.vertex(maxKFid+3*(pKFi->mPrevKF->mnId)+1);
-            g2o::HyperGraph::Vertex* VG1 = optimizer.vertex(maxKFid+3*(pKFi->mPrevKF->mnId)+2);
-            g2o::HyperGraph::Vertex* VA1 = optimizer.vertex(maxKFid+3*(pKFi->mPrevKF->mnId)+3);
-            g2o::HyperGraph::Vertex* VP2 = optimizer.vertex(pKFi->mnId);
-            g2o::HyperGraph::Vertex* VV2 = optimizer.vertex(maxKFid+3*(pKFi->mnId)+1);
-            g2o::HyperGraph::Vertex* VG2 = optimizer.vertex(maxKFid+3*(pKFi->mnId)+2);
-            g2o::HyperGraph::Vertex* VA2 = optimizer.vertex(maxKFid+3*(pKFi->mnId)+3);
+            pKFi->mpImuPreintegrated->SetNewBias(pKFi->mPrevKF->GetImuBias()); // keyFrame의 Bias를 이전 keyFrame의 Bias로 설정
+            g2o::HyperGraph::Vertex* VP1 = optimizer.vertex(pKFi->mPrevKF->mnId); // 이전 keyFrame의 pose Vertex를 가져옴
+            g2o::HyperGraph::Vertex* VV1 = optimizer.vertex(maxKFid+3*(pKFi->mPrevKF->mnId)+1); // 이전 keyFrame의 속도 Vertex를 가져옴
+            g2o::HyperGraph::Vertex* VG1 = optimizer.vertex(maxKFid+3*(pKFi->mPrevKF->mnId)+2); // 이전 keyFrame의 Gyro Bias Vertex를 가져옴
+            g2o::HyperGraph::Vertex* VA1 = optimizer.vertex(maxKFid+3*(pKFi->mPrevKF->mnId)+3); // 이전 keyFrame의 가속도 Bias Vertex를 가져옴
+            g2o::HyperGraph::Vertex* VP2 = optimizer.vertex(pKFi->mnId); // keyFrame의 pose Vertex를 가져옴
+            g2o::HyperGraph::Vertex* VV2 = optimizer.vertex(maxKFid+3*(pKFi->mn Id)+1); // keyFrame의 속도 Vertex를 가져옴
+            g2o::HyperGraph::Vertex* VG2 = optimizer.vertex(maxKFid+3*(pKFi->mnId)+2); // keyFrame의 Gyro Bias Vertex를 가져옴
+            g2o::HyperGraph::Vertex* VA2 = optimizer.vertex(maxKFid+3*(pKFi->mnId)+3); // keyFrame의 가속도 Bias Vertex를 가져옴
 
-            if(!VP1 || !VV1 || !VG1 || !VA1 || !VP2 || !VV2 || !VG2 || !VA2)
+            if(!VP1 || !VV1 || !VG1 || !VA1 || !VP2 || !VV2 || !VG2 || !VA2) // Vertex가 존재하지 않는 것이 있다면 무시
             {
                 cerr << "Error " << VP1 << ", "<< VV1 << ", "<< VG1 << ", "<< VA1 << ", " << VP2 << ", " << VV2 <<  ", "<< VG2 << ", "<< VA2 <<endl;
                 continue;
             }
 
-            vei[i] = new EdgeInertial(pKFi->mpImuPreintegrated);
+            vei[i] = new EdgeInertial(pKFi->mpImuPreintegrated); // keyFrame의 preintegration 객체를 통해 관성 에지 생성
 
-            vei[i]->setVertex(0,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VP1));
-            vei[i]->setVertex(1,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VV1));
-            vei[i]->setVertex(2,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VG1));
-            vei[i]->setVertex(3,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VA1));
-            vei[i]->setVertex(4,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VP2));
-            vei[i]->setVertex(5,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VV2));
+            vei[i]->setVertex(0,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VP1)); // 에지에 이전 keyFrame의 pose를 설정
+            vei[i]->setVertex(1,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VV1)); // 에지에 이전 keyFrame의 속도를 설정
+            vei[i]->setVertex(2,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VG1)); // 에지에 이전 keyFrame의 Gyro bias를 설정
+            vei[i]->setVertex(3,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VA1)); // 에지에 이전 keyFrame의 가속도 bias를 설정
+            vei[i]->setVertex(4,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VP2)); // 에지에 keyFrame의 pose를 설정
+            vei[i]->setVertex(5,dynamic_cast<g2o::OptimizableGraph::Vertex*>(VV2)); // 에지에 keyFrame의 속도를 설정
 
             // TODO Uncomment
             g2o::RobustKernelHuber* rki = new g2o::RobustKernelHuber;
-            vei[i]->setRobustKernel(rki);
-            rki->setDelta(sqrt(16.92));
-            optimizer.addEdge(vei[i]);
+            vei[i]->setRobustKernel(rki); // 에지에 Robust 커널을 설정
+            rki->setDelta(sqrt(16.92)); // 커널의 가중치 설정
+            optimizer.addEdge(vei[i]); // 옵티마이저에 에지 추가
 
-            vegr[i] = new EdgeGyroRW();
-            vegr[i]->setVertex(0,VG1);
-            vegr[i]->setVertex(1,VG2);
-            Eigen::Matrix3d InfoG = pKFi->mpImuPreintegrated->C.block<3,3>(9,9).cast<double>().inverse();
-            vegr[i]->setInformation(InfoG);
-            optimizer.addEdge(vegr[i]);
+            vegr[i] = new EdgeGyroRW(); // Gryo Bias 에지 생성
+            vegr[i]->setVertex(0,VG1); // 에지에 이전 KeyFrame의 Gyro Bias 설정
+            vegr[i]->setVertex(1,VG2); // 에지에 KeyFrame의 Gyro Bias 설정
+            Eigen::Matrix3d InfoG = pKFi->mpImuPreintegrated->C.block<3,3>(9,9).cast<double>().inverse(); // keyFrame의 Preintegration 객체에서 Gyro bias 부분을 가져와 information 행렬로 저장
+            vegr[i]->setInformation(InfoG); // 에지에 information 행렬 설정
+            optimizer.addEdge(vegr[i]); // 옵티마이저에 에지 추가
 
-            vear[i] = new EdgeAccRW();
-            vear[i]->setVertex(0,VA1);
-            vear[i]->setVertex(1,VA2);
-            Eigen::Matrix3d InfoA = pKFi->mpImuPreintegrated->C.block<3,3>(12,12).cast<double>().inverse();
-            vear[i]->setInformation(InfoA);
-            optimizer.addEdge(vear[i]);
+            vear[i] = new EdgeAccRW(); // 가속도 Bias 에지 생성
+            vear[i]->setVertex(0,VA1); // 에지에 이전 KeyFrame의 가속도 Bias 설정
+            vear[i]->setVertex(1,VA2); // 에지에 KeyFrame의 가속도 Bias 설정
+            Eigen::Matrix3d InfoA = pKFi->mpImuPreintegrated->C.block<3,3>(12,12).cast<double>().inverse(); // keyFrame의 Preintegration 객체에서 가속도 bias 부분을 가져와 information 행렬로 저장
+            vear[i]->setInformation(InfoA); // 에지에 information 행렬 설정
+            optimizer.addEdge(vear[i]); // 옵티마이저에 에지 추가
         }
         else
             Verbose::PrintMess("ERROR building inertial edge", Verbose::VERBOSITY_NORMAL);
@@ -4258,13 +4262,13 @@ void Optimizer::MergeInertialBA(KeyFrame* pCurrKF, KeyFrame* pMergeKF, bool *pbS
     const int nExpectedSize = (N+Ncov+lFixedKeyFrames.size())*lLocalMapPoints.size();
 
     // Mono
-    vector<EdgeMono*> vpEdgesMono;
+    vector<EdgeMono*> vpEdgesMono; // Monocular 에지 배열 생성
     vpEdgesMono.reserve(nExpectedSize);
 
-    vector<KeyFrame*> vpEdgeKFMono;
+    vector<KeyFrame*> vpEdgeKFMono; // Monocular keyFrame 에지 배열 생성
     vpEdgeKFMono.reserve(nExpectedSize);
 
-    vector<MapPoint*> vpMapPointEdgeMono;
+    vector<MapPoint*> vpMapPointEdgeMono; // Monocular MapPoint 에지 배열 생성
     vpMapPointEdgeMono.reserve(nExpectedSize);
 
     // Stereo
@@ -4277,71 +4281,71 @@ void Optimizer::MergeInertialBA(KeyFrame* pCurrKF, KeyFrame* pMergeKF, bool *pbS
     vector<MapPoint*> vpMapPointEdgeStereo;
     vpMapPointEdgeStereo.reserve(nExpectedSize);
 
-    const float thHuberMono = sqrt(5.991);
+    const float thHuberMono = sqrt(5.991); // Monocular 가중치 저장
     const float chi2Mono2 = 5.991;
     const float thHuberStereo = sqrt(7.815);
     const float chi2Stereo2 = 7.815;
 
     const unsigned long iniMPid = maxKFid*5;
 
-    for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
+    for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++) // 최적화 대상 MapPoint 배열 loop
     {
         MapPoint* pMP = *lit;
-        if (!pMP)
+        if (!pMP) // MapPoint가 존재하지 않으면 무시
             continue;
 
-        g2o::VertexSBAPointXYZ* vPoint = new g2o::VertexSBAPointXYZ();
-        vPoint->setEstimate(pMP->GetWorldPos().cast<double>());
+        g2o::VertexSBAPointXYZ* vPoint = new g2o::VertexSBAPointXYZ(); // MapPoint의 3D Point Vertex 생성
+        vPoint->setEstimate(pMP->GetWorldPos().cast<double>()); // MapPoint의 pose를 가져와 Vertex에 설정
 
-        unsigned long id = pMP->mnId+iniMPid+1;
-        vPoint->setId(id);
-        vPoint->setMarginalized(true);
-        optimizer.addVertex(vPoint);
+        unsigned long id = pMP->mnId+iniMPid+1; // MapPoint의 ID에 초기 MapPoint ID를 더해 ID로 사용
+        vPoint->setId(id); // Vertex의 ID를 설정
+        vPoint->setMarginalized(true); // Marginalization을 진행한다고 설정
+        optimizer.addVertex(vPoint); // 옵티마이저에 Vertex 추가
 
-        const map<KeyFrame*,tuple<int,int>> observations = pMP->GetObservations();
+        const map<KeyFrame*,tuple<int,int>> observations = pMP->GetObservations(); // MapPoint의 추적 대상 keyFrame을 가져옴
 
         // Create visual constraints
-        for(map<KeyFrame*,tuple<int,int>>::const_iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
+        for(map<KeyFrame*,tuple<int,int>>::const_iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++) // MapPoint의 추적 대상 keyFrame을 loop
         {
             KeyFrame* pKFi = mit->first;
 
-            if (!pKFi)
+            if (!pKFi) // keyFrame이 존재하지 않으면 무시
                 continue;
 
-            if ((pKFi->mnBALocalForKF!=pCurrKF->mnId) && (pKFi->mnBAFixedForKF!=pCurrKF->mnId))
+            if ((pKFi->mnBALocalForKF!=pCurrKF->mnId) && (pKFi->mnBAFixedForKF!=pCurrKF->mnId)) // keyFrame의 최적화와 Fixed 대상이 현재 keyFrame이 아닌 경우 무시
                 continue;
 
-            if (pKFi->mnId>maxKFid){
+            if (pKFi->mnId>maxKFid){ // keyFrame의 ID가 최대 keyFrame ID보다 크면 무시
                 continue;
             }
 
 
-            if(optimizer.vertex(id)==NULL || optimizer.vertex(pKFi->mnId)==NULL)
+            if(optimizer.vertex(id)==NULL || optimizer.vertex(pKFi->mnId)==NULL) // MapPoint의 3D Point Vertex가 없거나 keyFrame의 pose Vertex가 없다면 무시
                 continue;
 
-            if(!pKFi->isBad())
+            if(!pKFi->isBad()) // KeyFrame가 Bad 상태가 아니면
             {
-                const cv::KeyPoint &kpUn = pKFi->mvKeysUn[get<0>(mit->second)];
+                const cv::KeyPoint &kpUn = pKFi->mvKeysUn[get<0>(mit->second)]; // index를 통해 keyPoint를 가져옴
 
-                if(pKFi->mvuRight[get<0>(mit->second)]<0) // Monocular observation
+                if(pKFi->mvuRight[get<0>(mit->second)]<0) // 왼쪽에서 관찰한 경우 // Monocular observation
                 {
                     Eigen::Matrix<double,2,1> obs;
-                    obs << kpUn.pt.x, kpUn.pt.y;
+                    obs << kpUn.pt.x, kpUn.pt.y; // KeyPoint의 위치 행렬을 생성
 
-                    EdgeMono* e = new EdgeMono();
-                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id)));
-                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pKFi->mnId)));
-                    e->setMeasurement(obs);
-                    const float &invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave];
-                    e->setInformation(Eigen::Matrix2d::Identity()*invSigma2);
+                    EdgeMono* e = new EdgeMono(); // Monocular 에지 생성
+                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id))); // MapPoint의 position을 에지에 추가
+                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(pKFi->mnId))); // keyFrame의 position을 에지에 추가
+                    e->setMeasurement(obs); // 위치 행렬 설정
+                    const float &invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave]; // keyPoint의 옥타브를 통해 sigma 값을 가져옴
+                    e->setInformation(Eigen::Matrix2d::Identity()*invSigma2); // information 행렬 설정
 
                     g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
-                    e->setRobustKernel(rk);
-                    rk->setDelta(thHuberMono);
-                    optimizer.addEdge(e);
-                    vpEdgesMono.push_back(e);
-                    vpEdgeKFMono.push_back(pKFi);
-                    vpMapPointEdgeMono.push_back(pMP);
+                    e->setRobustKernel(rk); // Robust 커널 설정
+                    rk->setDelta(thHuberMono); // 커널에 가중치 설정
+                    optimizer.addEdge(e); // 옵티마이저에 에지 추가
+                    vpEdgesMono.push_back(e); // 에지 배열에 삽입
+                    vpEdgeKFMono.push_back(pKFi); // 에지 keyFrame 배열에 삽입
+                    vpMapPointEdgeMono.push_back(pMP); // 에지 MapPoint 배열에 삽입
                 }
                 else // stereo observation
                 {
@@ -4377,26 +4381,26 @@ void Optimizer::MergeInertialBA(KeyFrame* pCurrKF, KeyFrame* pMergeKF, bool *pbS
         if(*pbStopFlag)
             return;
 
-    optimizer.initializeOptimization();
-    optimizer.optimize(8);
+    optimizer.initializeOptimization(); // 옵티마이저 초기화
+    optimizer.optimize(8); // 최적화 진행. 8회 반복
 
-    vector<pair<KeyFrame*,MapPoint*> > vToErase;
+    vector<pair<KeyFrame*,MapPoint*> > vToErase; // 지울 대상 배열 생성
     vToErase.reserve(vpEdgesMono.size()+vpEdgesStereo.size());
 
     // Check inlier observations
     // Mono
-    for(size_t i=0, iend=vpEdgesMono.size(); i<iend;i++)
+    for(size_t i=0, iend=vpEdgesMono.size(); i<iend;i++) // Monocualr 에지 배열 loop
     {
-        EdgeMono* e = vpEdgesMono[i];
-        MapPoint* pMP = vpMapPointEdgeMono[i];
+        EdgeMono* e = vpEdgesMono[i]; // Monocular 에지를 가져옴
+        MapPoint* pMP = vpMapPointEdgeMono[i]; // 에지에 해당하는 MapPoint를 가져옴
 
-        if(pMP->isBad())
+        if(pMP->isBad()) // MapPoint가 Bad 상태인 경우 무시
             continue;
 
-        if(e->chi2()>chi2Mono2)
+        if(e->chi2()>chi2Mono2) // 에지의 제곱이 가중치보다 큰 경우
         {
-            KeyFrame* pKFi = vpEdgeKFMono[i];
-            vToErase.push_back(make_pair(pKFi,pMP));
+            KeyFrame* pKFi = vpEdgeKFMono[i]; // 에지에 해당하는 keyFrame을 가져옴
+            vToErase.push_back(make_pair(pKFi,pMP)); // keyFrame과 MapPoint를 제거 대상 배열에 삽입
         }
     }
 
@@ -4418,78 +4422,78 @@ void Optimizer::MergeInertialBA(KeyFrame* pCurrKF, KeyFrame* pMergeKF, bool *pbS
 
     // Get Map Mutex and erase outliers
     unique_lock<mutex> lock(pMap->mMutexMapUpdate);
-    if(!vToErase.empty())
+    if(!vToErase.empty()) // 지울 대상이 있다면
     {
-        for(size_t i=0;i<vToErase.size();i++)
+        for(size_t i=0;i<vToErase.size();i++) // 지울 대상 배열 loop
         {
             KeyFrame* pKFi = vToErase[i].first;
             MapPoint* pMPi = vToErase[i].second;
-            pKFi->EraseMapPointMatch(pMPi);
-            pMPi->EraseObservation(pKFi);
+            pKFi->EraseMapPointMatch(pMPi); // keyFrame에서 MapPoint를 제거
+            pMPi->EraseObservation(pKFi); // MapPoint에서 keyFrame을 제거
         }
     }
 
 
     // Recover optimized data
     //Keyframes
-    for(int i=0; i<N; i++)
+    for(int i=0; i<N; i++) // 최적화 대상 배열의 크기만큼 loop
     {
-        KeyFrame* pKFi = vpOptimizableKFs[i];
+        KeyFrame* pKFi = vpOptimizableKFs[i]; // 최적화 대상 keyFrame을 가져옴
 
-        VertexPose* VP = static_cast<VertexPose*>(optimizer.vertex(pKFi->mnId));
-        Sophus::SE3f Tcw(VP->estimate().Rcw[0].cast<float>(), VP->estimate().tcw[0].cast<float>());
-        pKFi->SetPose(Tcw);
+        VertexPose* VP = static_cast<VertexPose*>(optimizer.vertex(pKFi->mnId)); // KeyFrame에 해당하는 pose Vertex를 가져옴
+        Sophus::SE3f Tcw(VP->estimate().Rcw[0].cast<float>(), VP->estimate().tcw[0].cast<float>()); // 최적화된 pose 행렬 생성
+        pKFi->SetPose(Tcw); // 최적화된 keyFrame의 pose를 설정
 
-        Sophus::SE3d Tiw = pKFi->GetPose().cast<double>();
-        g2o::Sim3 g2oSiw(Tiw.unit_quaternion(),Tiw.translation(),1.0);
-        corrPoses[pKFi] = g2oSiw;
+        Sophus::SE3d Tiw = pKFi->GetPose().cast<double>(); // keyFrame의 pose를 가져옴
+        g2o::Sim3 g2oSiw(Tiw.unit_quaternion(),Tiw.translation(),1.0); // keyFrame의 pose를 통해 Sim3 변환 객체 생성
+        corrPoses[pKFi] = g2oSiw; // keyFrame에 해당하는 Sim3 변환 저장
 
-        if(pKFi->bImu)
+        if(pKFi->bImu) // keyFrame이 IMU를 사용하는 경우
         {
-            VertexVelocity* VV = static_cast<VertexVelocity*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+1));
-            pKFi->SetVelocity(VV->estimate().cast<float>());
-            VertexGyroBias* VG = static_cast<VertexGyroBias*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+2));
-            VertexAccBias* VA = static_cast<VertexAccBias*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+3));
+            VertexVelocity* VV = static_cast<VertexVelocity*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+1)); // KeyFrmae에 해당하는 속도 Vertex를 가져옴
+            pKFi->SetVelocity(VV->estimate().cast<float>()); // 최적화된 속도 값을 keyFrame에 설정
+            VertexGyroBias* VG = static_cast<VertexGyroBias*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+2)); // KeyFrame에 해당하는 Gyro Bias Vertex를 가져옴
+            VertexAccBias* VA = static_cast<VertexAccBias*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+3)); // KeyFrame에 해당하는 가속도 Bias Vertex를 가져옴
             Vector6d b;
-            b << VG->estimate(), VA->estimate();
-            pKFi->SetNewBias(IMU::Bias(b[3],b[4],b[5],b[0],b[1],b[2]));
+            b << VG->estimate(), VA->estimate(); // 최적화한 Gyro 및 가속도 Bias를 통해 새로운 Bias 객체 생성
+            pKFi->SetNewBias(IMU::Bias(b[3],b[4],b[5],b[0],b[1],b[2])); // 최적화된 Bias를 KeyFrame에 설정
         }
     }
 
-    for(int i=0; i<Ncov; i++)
+    for(int i=0; i<Ncov; i++) // IMU 파라미터를 최적화하지 않은 KeyFrame 배열 loop
     {
         KeyFrame* pKFi = vpOptimizableCovKFs[i];
 
-        VertexPose* VP = static_cast<VertexPose*>(optimizer.vertex(pKFi->mnId));
-        Sophus::SE3f Tcw(VP->estimate().Rcw[0].cast<float>(), VP->estimate().tcw[0].cast<float>());
-        pKFi->SetPose(Tcw);
+        VertexPose* VP = static_cast<VertexPose*>(optimizer.vertex(pKFi->mnId)); // KeyFrame에 해당하는 pose Vertex를 가져옴
+        Sophus::SE3f Tcw(VP->estimate().Rcw[0].cast<float>(), VP->estimate().tcw[0].cast<float>()); // 최적화된 pose 행렬 생성
+        pKFi->SetPose(Tcw); // 최적화된 keyFrame의 pose를 설정
 
-        Sophus::SE3d Tiw = pKFi->GetPose().cast<double>();
-        g2o::Sim3 g2oSiw(Tiw.unit_quaternion(),Tiw.translation(),1.0);
-        corrPoses[pKFi] = g2oSiw;
+        Sophus::SE3d Tiw = pKFi->GetPose().cast<double>(); // keyFrame의 pose를 가져옴
+        g2o::Sim3 g2oSiw(Tiw.unit_quaternion(),Tiw.translation(),1.0); // keyFrame의 pose를 통해 Sim3 변환 객체 생성
+        corrPoses[pKFi] = g2oSiw; // keyFrame에 해당하는 Sim3 변환 저장
 
-        if(pKFi->bImu)
+        if(pKFi->bImu) // keyFrame이 IMU를 사용하는 경우
         {
-            VertexVelocity* VV = static_cast<VertexVelocity*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+1));
-            pKFi->SetVelocity(VV->estimate().cast<float>());
-            VertexGyroBias* VG = static_cast<VertexGyroBias*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+2));
-            VertexAccBias* VA = static_cast<VertexAccBias*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+3));
+            VertexVelocity* VV = static_cast<VertexVelocity*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+1)); // KeyFrmae에 해당하는 속도 Vertex를 가져옴
+            pKFi->SetVelocity(VV->estimate().cast<float>()); // 최적화된 속도 값을 keyFrame에 설정
+            VertexGyroBias* VG = static_cast<VertexGyroBias*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+2)); // KeyFrame에 해당하는 Gyro Bias Vertex를 가져옴
+            VertexAccBias* VA = static_cast<VertexAccBias*>(optimizer.vertex(maxKFid+3*(pKFi->mnId)+3)); // KeyFrame에 해당하는 가속도 Bias Vertex를 가져옴
             Vector6d b;
-            b << VG->estimate(), VA->estimate();
-            pKFi->SetNewBias(IMU::Bias(b[3],b[4],b[5],b[0],b[1],b[2]));
+            b << VG->estimate(), VA->estimate(); // 최적화한 Gyro 및 가속도 Bias를 통해 새로운 Bias 객체 생성
+            pKFi->SetNewBias(IMU::Bias(b[3],b[4],b[5],b[0],b[1],b[2])); // 최적화된 Bias를 KeyFrame에 설정
         }
     }
 
     //Points
-    for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
+    for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++) // 최적화 대상 MapPoint 배열 loop
     {
         MapPoint* pMP = *lit;
-        g2o::VertexSBAPointXYZ* vPoint = static_cast<g2o::VertexSBAPointXYZ*>(optimizer.vertex(pMP->mnId+iniMPid+1));
-        pMP->SetWorldPos(vPoint->estimate().cast<float>());
-        pMP->UpdateNormalAndDepth();
+        g2o::VertexSBAPointXYZ* vPoint = static_cast<g2o::VertexSBAPointXYZ*>(optimizer.vertex(pMP->mnId+iniMPid+1)); // MapPoint의 3D Point Vertex를 가져옴
+        pMP->SetWorldPos(vPoint->estimate().cast<float>()); // 최적화된 MapPoint pose를 설정
+        pMP->UpdateNormalAndDepth(); // MapPoint의 Normal과 Depth를 Update
     }
 
-    pMap->IncreaseChangeIndex();
+    pMap->IncreaseChangeIndex(); // Map의 index를 변경
 }
 
 int Optimizer::PoseInertialOptimizationLastKeyFrame(Frame *pFrame, bool bRecInit)
@@ -4877,7 +4881,7 @@ int Optimizer::PoseInertialOptimizationLastKeyFrame(Frame *pFrame, bool bRecInit
 }
 
 int Optimizer::PoseInertialOptimizationLastFrame(Frame *pFrame, bool bRecInit)
-{
+{ 
     g2o::SparseOptimizer optimizer;
     g2o::BlockSolverX::LinearSolverType * linearSolver;
 
